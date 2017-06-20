@@ -525,4 +525,9 @@ public class YoPolynomial3D
                                                                               zdFinal.getElement(index));
 
    }
+   
+   public String toString()
+   {
+      return "X: " + xPolynomial.toString() + "\n" + "Y: " + yPolynomial.toString() + "\n" + "Z: " + zPolynomial.toString();
+   }
 }

@@ -20,7 +20,7 @@ public class YoPolynomial
    private final DenseMatrix64F constraintVector;
    private final DenseMatrix64F coefficientVector;
    private final double[] xPowers;
-   
+
    // Stores the (n-th order) derivative of the xPowers vector
    private final DenseMatrix64F xPowersDerivativeVector;
    private double xInitial, xFinal;
@@ -38,7 +38,7 @@ public class YoPolynomial
       constraintVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
       coefficientVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
       xPowers = new double[maximumNumberOfCoefficients];
-      
+
       xPowersDerivativeVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
 
       numberOfCoefficients = new IntegerYoVariable(name + "_nCoeffs", registry);
@@ -62,7 +62,7 @@ public class YoPolynomial
       constraintVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
       coefficientVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
       xPowers = new double[maximumNumberOfCoefficients];
-      
+
       xPowersDerivativeVector = new DenseMatrix64F(maximumNumberOfCoefficients, 1);
    }
 
@@ -95,7 +95,7 @@ public class YoPolynomial
       }
       return ret;
    }
-   
+
    public DenseMatrix64F getCoefficientsVector()
    {
       return coefficientVector;
@@ -589,12 +589,12 @@ public class YoPolynomial
          xPowers[i] = xPowers[i - 1] * x;
       }
    }
-   
+
    // Returns the order-th derivative of the polynomial at x
    public double getDerivative(int order, double x)
    {
       setXPowers(xPowers, x);
-      
+
       dPos = 0.0;
       int derivativeCoefficient = 0;
       for (int i = order; i < numberOfCoefficients.getIntegerValue(); i++)
@@ -609,23 +609,23 @@ public class YoPolynomial
    public DenseMatrix64F getXPowersDerivativeVector(int order, double x)
    {
       setXPowers(xPowers, x);
-      
+
       int derivativeCoefficient = 0;
-      for(int i = order; i < xPowers.length; i++)
+      for (int i = order; i < xPowers.length; i++)
       {
          derivativeCoefficient = getDerivativeCoefficient(order, i);
-         xPowersDerivativeVector.set(i, derivativeCoefficient*xPowers[i - order]);
+         xPowersDerivativeVector.set(i, derivativeCoefficient * xPowers[i - order]);
       }
-      
+
       return xPowersDerivativeVector;
    }
-   
+
    // Returns the constant coefficient at the exponent-th entry of the order-th derivative vector
    // Example: order = 4, exponent = 5 ==> returns 5*4*3*2
    private int getDerivativeCoefficient(int order, int exponent)
    {
       int coeff = 1;
-      for(int i = exponent; i > exponent - order; i--)
+      for (int i = exponent; i > exponent - order; i--)
       {
          coeff *= i;
       }
@@ -702,7 +702,7 @@ public class YoPolynomial
       for (int i = numberOfCoefficientsRequired; i < maximumNumberOfCoefficients; i++)
          a[i].set(Double.NaN);
    }
-   
+
    private void setXInitial(double xInitial)
    {
       this.xInitial = xInitial;
@@ -712,21 +712,36 @@ public class YoPolynomial
    {
       this.xFinal = xFinal;
    }
-   
+
    private void setXBoundary(double xInitial, double xFinal)
    {
       setXInitial(xInitial);
       setXFinal(xFinal);
    }
-   
+
    public double getXInitial()
    {
       return this.xInitial;
    }
-   
+
    public double getXFinal()
    {
       return this.xFinal;
+   }
+
+   public String toString()
+   {
+      String inString = "Polynomial: " + a[0].getDoubleValue();
+      for (int i = 1; i < a.length; i++)
+      {
+         inString += " ";
+         if (a[i].getDoubleValue() >= 0)
+            inString += "+";
+         inString += a[i].getDoubleValue() + " x^" + i;
+
+      }
+      inString += " XInitial: " + xInitial + " XFinal: " + xFinal;
+      return inString;
    }
 
 }
