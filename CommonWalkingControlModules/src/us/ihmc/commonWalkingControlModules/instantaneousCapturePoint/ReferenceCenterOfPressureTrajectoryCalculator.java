@@ -3,10 +3,6 @@ package us.ihmc.commonWalkingControlModules.instantaneousCapturePoint;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.factory.LinearSolverFactory;
-import org.ejml.interfaces.linsol.LinearSolver;
-
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.configurations.CenterOfPressurePlannerParameters;
 import us.ihmc.commonWalkingControlModules.configurations.CoPSplineType;
@@ -23,11 +19,6 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
-import us.ihmc.robotics.dataStructures.registry.YoVariableRegistry;
-import us.ihmc.robotics.dataStructures.variable.BooleanYoVariable;
-import us.ihmc.robotics.dataStructures.variable.DoubleYoVariable;
-import us.ihmc.robotics.dataStructures.variable.EnumYoVariable;
-import us.ihmc.robotics.dataStructures.variable.IntegerYoVariable;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FramePoint2d;
@@ -41,6 +32,11 @@ import us.ihmc.robotics.math.trajectories.waypoints.FrameEuclideanTrajectoryPoin
 import us.ihmc.robotics.referenceFrames.ReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPComponentPolynomialTrajectoryPlannerInterface
 {
@@ -52,13 +48,13 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
    private YoVariableRegistry parentRegistry;
    private String namePrefix;
 
-   private BooleanYoVariable isDoneWalking;
-   private IntegerYoVariable numberOfUpcomingFootsteps;
-   private IntegerYoVariable numberOfPointsPerFoot;
-   private IntegerYoVariable numberOfFootstepstoConsider;
-   private EnumYoVariable<CoPSplineType> orderOfSplineInterpolation;
-   private DoubleYoVariable defaultFinalTransferDuration;
-   private DoubleYoVariable defaultStationaryTransferDuration;
+   private YoBoolean isDoneWalking;
+   private YoInteger numberOfUpcomingFootsteps;
+   private YoInteger numberOfPointsPerFoot;
+   private YoInteger numberOfFootstepstoConsider;
+   private YoEnum<CoPSplineType> orderOfSplineInterpolation;
+   private YoDouble defaultFinalTransferDuration;
+   private YoDouble defaultStationaryTransferDuration;
    private Vector2D finalTransferOffset;
    private List<FootstepTrajectoryPoint> footstepTrajectory = new ArrayList<>();
    private FrameEuclideanTrajectoryPointList coPWayPoints = new FrameEuclideanTrajectoryPointList();
@@ -97,7 +93,7 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
       this.parentRegistry = parentRegistry;
       if (parentRegistry != null)
          parentRegistry.addChild(registry);
-      isDoneWalking = new BooleanYoVariable(namePrefix + "IsDoneWalking", registry);
+      isDoneWalking = new YoBoolean(namePrefix + "IsDoneWalking", registry);
 
       for (RobotSide side : RobotSide.values)
       {
@@ -129,18 +125,18 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
       currentSoleZUpFrames = bipedSupportPolygons.getSoleZUpFrames();
       this.bipedSupportPolygons = bipedSupportPolygons;
 
-      this.defaultFinalTransferDuration = new DoubleYoVariable(namePrefix + "FinalTransferDuration", registry);
+      this.defaultFinalTransferDuration = new YoDouble(namePrefix + "FinalTransferDuration", registry);
       this.defaultFinalTransferDuration.set(icpPlannerParameters.getDefaultFinalTransferDuration());
-      this.defaultStationaryTransferDuration = new DoubleYoVariable(namePrefix + "StationaryTransferDuration", registry);
+      this.defaultStationaryTransferDuration = new YoDouble(namePrefix + "StationaryTransferDuration", registry);
       this.defaultStationaryTransferDuration.set(icpPlannerParameters.getDefaultStationaryTransferTime());
       this.finalTransferOffset = icpPlannerParameters.getFinalTransferCoPOffset();
-      this.numberOfUpcomingFootsteps = new IntegerYoVariable(namePrefix + "NumberOfUpcomingFootsteps", registry);
+      this.numberOfUpcomingFootsteps = new YoInteger(namePrefix + "NumberOfUpcomingFootsteps", registry);
       this.numberOfUpcomingFootsteps.set(0);
-      this.numberOfPointsPerFoot = new IntegerYoVariable(namePrefix + "NumberOfPointsPerFootstep", registry);
+      this.numberOfPointsPerFoot = new YoInteger(namePrefix + "NumberOfPointsPerFootstep", registry);
       this.numberOfPointsPerFoot.set(icpPlannerParameters.getNumberOfWayPointsPerFoot());
-      this.numberOfFootstepstoConsider = new IntegerYoVariable(namePrefix + "NumberOfFootstepsToConsider", registry);
+      this.numberOfFootstepstoConsider = new YoInteger(namePrefix + "NumberOfFootstepsToConsider", registry);
       this.numberOfFootstepstoConsider.set(icpPlannerParameters.getNumberOfFootstepsToConsider());
-      this.orderOfSplineInterpolation = new EnumYoVariable<>(namePrefix + "OrderOfSplineInterpolation", registry, CoPSplineType.class);
+      this.orderOfSplineInterpolation = new YoEnum<>(namePrefix + "OrderOfSplineInterpolation", registry, CoPSplineType.class);
       this.orderOfSplineInterpolation.set(icpPlannerParameters.getOrderOfCoPInterpolation());
    }
 

@@ -6,7 +6,6 @@ import java.util.List;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import us.ihmc.robotics.dataStructures.variable.DoubleYoVariable;
 import us.ihmc.robotics.geometry.Direction;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FrameTuple;
@@ -15,10 +14,11 @@ import us.ihmc.robotics.math.trajectories.PositionTrajectoryGenerator;
 import us.ihmc.robotics.math.trajectories.YoPolynomial;
 import us.ihmc.robotics.math.trajectories.YoPolynomial3D;
 import us.ihmc.robotics.referenceFrames.ReferenceFrame;
+import us.ihmc.yoVariables.variable.YoDouble;
 
 public class ICPPlannerTrajectoryFromCMPPolynomialGenerator implements PositionTrajectoryGenerator
 {
-   private final DoubleYoVariable omega0;
+   private final YoDouble omega0;
    private ReferenceFrame trajectoryFrame;
    
    private final static int firstSegment = 0;
@@ -71,7 +71,7 @@ public class ICPPlannerTrajectoryFromCMPPolynomialGenerator implements PositionT
    
    private final int numberOfSegments;
       
-   public ICPPlannerTrajectoryFromCMPPolynomialGenerator(DoubleYoVariable omega0, ReferenceFrame trajectoryFrame, List<YoPolynomial3D> cmpPolynomialTrajectories)
+   public ICPPlannerTrajectoryFromCMPPolynomialGenerator(YoDouble omega0, ReferenceFrame trajectoryFrame, List<YoPolynomial3D> cmpPolynomialTrajectories)
    {
       this.omega0 = omega0;
       this.trajectoryFrame = trajectoryFrame;
