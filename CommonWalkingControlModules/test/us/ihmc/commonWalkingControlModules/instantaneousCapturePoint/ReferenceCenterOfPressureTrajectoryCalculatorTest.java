@@ -29,6 +29,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 public class ReferenceCenterOfPressureTrajectoryCalculatorTest
 {
@@ -54,6 +55,7 @@ public class ReferenceCenterOfPressureTrajectoryCalculatorTest
    MidFootZUpGroundFrame midFeetZUpFrame;
    SideDependentList<YoPlaneContactState> contactStates = new SideDependentList<>();
    DummyCoPParameters icpPlannerParameters;
+   YoInteger numberOfFootstepsToConsider = new YoInteger("numberOfFootstepsToConsider", parentRegistry);
 
    @Before
    public void setUp()
@@ -94,10 +96,11 @@ public class ReferenceCenterOfPressureTrajectoryCalculatorTest
       midFeetZUpFrame = new MidFootZUpGroundFrame("DummyRobotMidFootZUpFrame", soleZUpFrames.get(RobotSide.LEFT), soleZUpFrames.get(RobotSide.RIGHT));
       BipedSupportPolygons bipedSupportPolygons = new BipedSupportPolygons(ankleZUpFrames, midFeetZUpFrame, soleZUpFrames, parentRegistry, null);
       bipedSupportPolygons.updateUsingContactStates(contactStates);
-      testCoPGenerator = new ReferenceCenterOfPressureTrajectoryCalculator("TestCoPPlanClass");
-      assertTrue("Object not initialized", testCoPGenerator != null);
       icpPlannerParameters = new DummyCoPParameters();
-      testCoPGenerator.initializeParameters(icpPlannerParameters, bipedSupportPolygons, contactableFeet, null);
+      numberOfFootstepsToConsider.set(icpPlannerParameters.getNumberOfFootstepsToConsider());
+      testCoPGenerator = new ReferenceCenterOfPressureTrajectoryCalculator("TestCoPPlanClass", icpPlannerParameters, bipedSupportPolygons,
+                                                                           contactableFeet, numberOfFootstepsToConsider, parentRegistry);
+      assertTrue("Object not initialized", testCoPGenerator != null);
    }
 
    @After
