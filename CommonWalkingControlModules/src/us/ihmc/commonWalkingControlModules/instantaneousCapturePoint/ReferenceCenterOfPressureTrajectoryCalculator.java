@@ -82,12 +82,12 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
    }
 
    /**
-    * @param icpPlannerParameters
+    * @param copPlannerParameters
     * @param bipedSupportPolygons
     * @param contactableFeet
     * @param parentRegistry
     */
-   public void initializeParameters(CenterOfPressurePlannerParameters icpPlannerParameters, BipedSupportPolygons bipedSupportPolygons,
+   public void initializeParameters(CenterOfPressurePlannerParameters copPlannerParameters, BipedSupportPolygons bipedSupportPolygons,
                                     SideDependentList<? extends ContactablePlaneBody> contactableFeet, YoVariableRegistry parentRegistry)
    {
       this.parentRegistry = parentRegistry;
@@ -100,25 +100,25 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
          FrameConvexPolygon2d defaultFootPolygon = new FrameConvexPolygon2d(contactableFeet.get(side).getContactPoints2d());
          defaultFootPolygons.put(side, defaultFootPolygon);
          currentSupportFootPolygonsInSoleZUpFrames.put(side, bipedSupportPolygons.getFootPolygonInSoleZUpFrame(side));
-         coPWayPointOffsets.put(side, icpPlannerParameters.getCoPWayPointLocationsFootFrame(side));
-         if (coPWayPointOffsets.get(side).size() != icpPlannerParameters.getNumberOfWayPointsPerFoot())
+         coPWayPointOffsets.put(side, copPlannerParameters.getCoPWayPointLocationsFootFrame(side));
+         if (coPWayPointOffsets.get(side).size() != copPlannerParameters.getNumberOfWayPointsPerFoot())
          {
             PrintTools.warn(this, "Mismatch in CoP Offsets size (" + coPWayPointOffsets.get(side).size() + ") and number of CoP trajectory way points ("
-                  + icpPlannerParameters.getNumberOfWayPointsPerFoot() + ")");
-            for (int i = coPWayPointOffsets.get(side).size(); i < icpPlannerParameters.getNumberOfWayPointsPerFoot(); i++)
+                  + copPlannerParameters.getNumberOfWayPointsPerFoot() + ")");
+            for (int i = coPWayPointOffsets.get(side).size(); i < copPlannerParameters.getNumberOfWayPointsPerFoot(); i++)
                coPWayPointOffsets.get(side).add(new Vector2D());
-            for (int i = coPWayPointOffsets.get(side).size() - icpPlannerParameters.getNumberOfWayPointsPerFoot(); i > 0; i--)
+            for (int i = coPWayPointOffsets.get(side).size() - copPlannerParameters.getNumberOfWayPointsPerFoot(); i > 0; i--)
                coPWayPointOffsets.get(side).remove(i);
          }
 
-         coPWayPointAlphas.put(side, icpPlannerParameters.getCoPWayPointAlpha(side));
-         if (coPWayPointAlphas.get(side).size() != (icpPlannerParameters.getNumberOfWayPointsPerFoot() - 1))
+         coPWayPointAlphas.put(side, copPlannerParameters.getCoPWayPointAlpha(side));
+         if (coPWayPointAlphas.get(side).size() != (copPlannerParameters.getNumberOfWayPointsPerFoot() - 1))
          {
             PrintTools.warn(this, "Mismatch in CoPAlpha size (" + coPWayPointAlphas.get(side).size() + ") and number of CoP trajectory way points ("
-                  + icpPlannerParameters.getNumberOfWayPointsPerFoot() + ")");
-            for (int i = coPWayPointAlphas.get(side).size(); i < icpPlannerParameters.getNumberOfWayPointsPerFoot() - 1; i++)
+                  + copPlannerParameters.getNumberOfWayPointsPerFoot() + ")");
+            for (int i = coPWayPointAlphas.get(side).size(); i < copPlannerParameters.getNumberOfWayPointsPerFoot() - 1; i++)
                coPWayPointAlphas.get(side).add(0.0);
-            for (int i = coPWayPointAlphas.get(side).size() - icpPlannerParameters.getNumberOfWayPointsPerFoot() + 1; i > 0; i--)
+            for (int i = coPWayPointAlphas.get(side).size() - copPlannerParameters.getNumberOfWayPointsPerFoot() + 1; i > 0; i--)
                coPWayPointAlphas.get(side).remove(i);
          }
       }
@@ -126,18 +126,18 @@ public class ReferenceCenterOfPressureTrajectoryCalculator implements CMPCompone
       this.bipedSupportPolygons = bipedSupportPolygons;
 
       this.defaultFinalTransferDuration = new YoDouble(namePrefix + "FinalTransferDuration", registry);
-      this.defaultFinalTransferDuration.set(icpPlannerParameters.getDefaultFinalTransferDuration());
+      this.defaultFinalTransferDuration.set(copPlannerParameters.getDefaultFinalTransferDuration());
       this.defaultStationaryTransferDuration = new YoDouble(namePrefix + "StationaryTransferDuration", registry);
-      this.defaultStationaryTransferDuration.set(icpPlannerParameters.getDefaultStationaryTransferTime());
-      this.finalTransferOffset = icpPlannerParameters.getFinalTransferCoPOffset();
+      this.defaultStationaryTransferDuration.set(copPlannerParameters.getDefaultStationaryTransferTime());
+      this.finalTransferOffset = copPlannerParameters.getFinalTransferCoPOffset();
       this.numberOfUpcomingFootsteps = new YoInteger(namePrefix + "NumberOfUpcomingFootsteps", registry);
       this.numberOfUpcomingFootsteps.set(0);
       this.numberOfPointsPerFoot = new YoInteger(namePrefix + "NumberOfPointsPerFootstep", registry);
-      this.numberOfPointsPerFoot.set(icpPlannerParameters.getNumberOfWayPointsPerFoot());
+      this.numberOfPointsPerFoot.set(copPlannerParameters.getNumberOfWayPointsPerFoot());
       this.numberOfFootstepstoConsider = new YoInteger(namePrefix + "NumberOfFootstepsToConsider", registry);
-      this.numberOfFootstepstoConsider.set(icpPlannerParameters.getNumberOfFootstepsToConsider());
+      this.numberOfFootstepstoConsider.set(copPlannerParameters.getNumberOfFootstepsToConsider());
       this.orderOfSplineInterpolation = new YoEnum<>(namePrefix + "OrderOfSplineInterpolation", registry, CoPSplineType.class);
-      this.orderOfSplineInterpolation.set(icpPlannerParameters.getOrderOfCoPInterpolation());
+      this.orderOfSplineInterpolation.set(copPlannerParameters.getOrderOfCoPInterpolation());
    }
 
    /**
