@@ -17,7 +17,7 @@ import us.ihmc.robotics.referenceFrames.ReferenceFrame;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
-public class ICPPlannerTrajectoryFromCMPPolynomialGenerator implements PositionTrajectoryGenerator
+public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements PositionTrajectoryGenerator
 {
    private final YoDouble omega0;
    private ReferenceFrame trajectoryFrame;
@@ -71,7 +71,7 @@ public class ICPPlannerTrajectoryFromCMPPolynomialGenerator implements PositionT
    private YoInteger numberOfFootstepsToConsider;
    private YoInteger numberOfFootstepsToConsiderForAngularMomentum;
 
-   public ICPPlannerTrajectoryFromCMPPolynomialGenerator(YoDouble omega0, ReferenceFrame trajectoryFrame, List<YoPolynomial3D> cmpPolynomialTrajectories)
+   public ReferenceICPTrajectoryFromCMPPolynomialGenerator(YoDouble omega0, ReferenceFrame trajectoryFrame, List<YoPolynomial3D> cmpPolynomialTrajectories)
    {
       this.omega0 = omega0;
       this.trajectoryFrame = trajectoryFrame;
