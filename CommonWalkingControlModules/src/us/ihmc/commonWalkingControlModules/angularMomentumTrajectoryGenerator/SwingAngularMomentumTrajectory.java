@@ -74,7 +74,7 @@ public class SwingAngularMomentumTrajectory implements AngularMomentumTrajectory
 
    public void computeFromCoPWaypoints(FramePoint zInitial, FramePoint zRefPoint1, FramePoint zRefPoint2, FramePoint zFinal)
    {
-      polynomialCoefficients.get(0).setCubicBezier(t0, tFinal, zInitial, zRefPoint1, zRefPoint2, zFinal);
+      polynomialCoefficients.get(0).setCubicBezier(0.0, 0.0, zInitial.getPoint(), zRefPoint1.getPoint(), zRefPoint2.getPoint(), zFinal.getPoint());
       numberOfSegments.set(1);
    }
    

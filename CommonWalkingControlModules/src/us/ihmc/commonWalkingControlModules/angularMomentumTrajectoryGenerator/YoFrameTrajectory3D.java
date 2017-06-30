@@ -108,7 +108,6 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
    {
       
    }
-
    
    public static YoFrameTrajectory3D[] createYoFrameTrajectory3DArray(YoTrajectory[] xTrajectory, YoTrajectory[] yTrajectory, YoTrajectory[] zTrajectory,
                                                                       ReferenceFrame referenceFrame)
@@ -598,7 +597,7 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
    {
       return referenceFrame;
    }
-   
+
    @Override
    public void checkReferenceFrameMatch(ReferenceFrameHolder referenceFrameHolder) throws ReferenceFrameMismatchException
    {

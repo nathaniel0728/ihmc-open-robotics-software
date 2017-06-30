@@ -373,7 +373,7 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
             boolean isUpcomingFootstepLast = noUpcomingFootsteps;
             computeBallCoPForSupportFoot(tmpCoP, transferFromSide, supportFootPolygonsInSoleZUpFrames.get(transferToSide).getCentroid(), isUpcomingFootstepLast);
             tmpCoP.changeFrame(transferFromSoleFrame);
-            exitCoPList.get(footIndex).set(tmpCoP);
+            exitCoPList.get(footIndex).setIncludingFrame(tmpCoP);
             copLocationWaypoints.get(footIndex).setIncludingFrame(2, tmpCoP);
          }
          else if (numberOfPointsPerFoot.getIntegerValue() > 1)
@@ -381,14 +381,14 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
             boolean isUpcomingFootstepLast = noUpcomingFootsteps;
             computeBallCoPForSupportFoot(tmpCoP, transferFromSide, supportFootPolygonsInSoleZUpFrames.get(transferToSide).getCentroid(), isUpcomingFootstepLast);
             tmpCoP.changeFrame(transferFromSoleFrame);
-            exitCoPList.get(footIndex).set(tmpCoP);
+            exitCoPList.get(footIndex).setIncludingFrame(tmpCoP);
             copLocationWaypoints.get(footIndex).setIncludingFrame(1, tmpCoP);
          }
          else
          {
             computeHeelCoPForSupportFoot(tmpCoP, transferFromSide, null, null);
             tmpCoP.changeFrame(transferFromSoleFrame);
-            exitCoPList.get(footIndex).set(tmpCoP);
+            exitCoPList.get(footIndex).setIncludingFrame(tmpCoP);
             copLocationWaypoints.get(footIndex).setIncludingFrame(0, tmpCoP);
          }
 
