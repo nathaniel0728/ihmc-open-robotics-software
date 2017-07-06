@@ -55,6 +55,14 @@ public class SwingAngularMomentumTrajectory implements AngularMomentumTrajectory
    @Override
    public void update(double timeInState)
    {
+      for(int i = 0; i < numberOfSegments.getIntegerValue(); i++)
+      {
+         if(timeInState > polynomialCoefficients.get(i).getInitialTime() && timeInState < polynomialCoefficients.get(i).getFinalTime())
+         {
+            currentSegment.set(i);
+            break;
+         }
+      }
       polynomialCoefficients.get(currentSegment.getIntegerValue()).compute(timeInState);
    }
 
@@ -72,9 +80,9 @@ public class SwingAngularMomentumTrajectory implements AngularMomentumTrajectory
       desiredTorqueToPack.setIncludingFrame(polynomialCoefficients.get(currentSegment.getIntegerValue()).getFrameVelocity());
    }
 
-   public void computeFromCoPWaypoints(FramePoint zInitial, FramePoint zRefPoint1, FramePoint zRefPoint2, FramePoint zFinal)
+   public void computeFromCoPWaypoints(double t0, double tFinal, FramePoint zInitial, FramePoint zRefPoint1, FramePoint zRefPoint2, FramePoint zFinal)
    {
-      polynomialCoefficients.get(0).setCubicBezier(0.0, 0.0, zInitial.getPoint(), zRefPoint1.getPoint(), zRefPoint2.getPoint(), zFinal.getPoint());
+      polynomialCoefficients.get(0).setCubicBezier(t0, tFinal, zInitial, zRefPoint1, zRefPoint2, zFinal);
       numberOfSegments.set(1);
    }
    
