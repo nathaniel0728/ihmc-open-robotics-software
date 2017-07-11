@@ -1,17 +1,15 @@
 package us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.smoothCMP;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
-
-import org.apache.bcel.generic.CPInstruction;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.configurations.CoPPointName;
 import us.ihmc.commonWalkingControlModules.configurations.CoPSplineType;
 import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.CoPPolynomialTrajectoryPlannerInterface;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.euclid.geometry.ConvexPolygon2D;
 import us.ihmc.euclid.tuple2D.Vector2D;
 import us.ihmc.graphicsDescription.appearance.YoAppearance;
@@ -22,6 +20,8 @@ import us.ihmc.graphicsDescription.yoGraphics.plotting.ArtifactList;
 import us.ihmc.humanoidRobotics.bipedSupportPolygons.ContactablePlaneBody;
 import us.ihmc.humanoidRobotics.footstep.Footstep;
 import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
+import us.ihmc.robotics.MathTools;
+import us.ihmc.robotics.geometry.ConvexPolygonShrinker;
 import us.ihmc.robotics.geometry.FrameConvexPolygon2d;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FramePoint2d;
@@ -55,6 +55,9 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    private final YoDouble safeDistanceFromCoPToSupportEdges;
    private final YoDouble stepLengthToCoPOffsetFactor;
    private final YoDouble percentageChickenSupport;
+   private final CoPPointName entryCoPPointName;
+   private final CoPPointName exitCoPPointName;
+   private final CoPPointName[] copPointList;
 
    // Trajectory planning parameters
    private final List<YoDouble> swingDurations;
@@ -80,20 +83,37 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    private final List<SwingCoPTrajectory> swingCoPTrajectories = new ArrayList<>();
 
    // Runtime variables
-   private CoPTrajectory activeTrajectory;
-   private double initialTime;
    private FramePoint desiredCoPPosition = new FramePoint();
    private FrameVector desiredCoPVelocity = new FrameVector();
    private FrameVector desiredCoPAcceleration = new FrameVector();
-   private int numberOfFootstepsConsidered;  // Always sync this with the YoInteger numberOfFootstepsToConsider
-   private int numberOfCoPPointsPerFoot;     // Always sync this with the YoInteger numberOfPointsPerFoot
+   private int numberOfFootstepsConsidered; // Always sync this with the YoInteger numberOfFootstepsToConsider
+   private int numberOfCoPPointsPerFoot; // Always sync this with the YoInteger numberOfPointsPerFoot
+
+   private int footstepIndex = 0;
+   private CoPTrajectory activeTrajectory;
+   private double initialTime;
+   private FrameConvexPolygon2d currentDoubleSupportPolygon = new FrameConvexPolygon2d();
+   private FrameConvexPolygon2d currentSupportFootPolygon = new FrameConvexPolygon2d();
+   private FrameConvexPolygon2d currentSwingFootInitialPolygon = new FrameConvexPolygon2d();
+   private FrameConvexPolygon2d currentSwingFootFinalPolygon = new FrameConvexPolygon2d();
+
+   // Temp variables for computation only
+   private FootstepData currentFootstepData;
+   private FrameConvexPolygon2d tempPolygon = new FrameConvexPolygon2d();
+   private ConvexPolygonShrinker polygonShrinker = new ConvexPolygonShrinker();
+   private FramePoint tempFramePoint = new FramePoint();
+   private double tempDouble;
+   private FramePoint2d tempFramePoint2d = new FramePoint2d();
+   private RobotSide currentSupportSide;
+   private FrameConvexPolygon2d framePolygonReference;
 
    // Planner level overrides (the planner knows better!)
    private static final int maxNumberOfPointsInFoot = 4;
    private static final int maxNumberOfFootstepsToConsider = 4;
 
    // Input data
-   private final RecyclingArrayList<FootstepData> upcomingFootstepsData = new RecyclingArrayList<FootstepData>(maxNumberOfFootstepsToConsider, FootstepData.class);
+   private final RecyclingArrayList<FootstepData> upcomingFootstepsData = new RecyclingArrayList<FootstepData>(maxNumberOfFootstepsToConsider,
+                                                                                                               FootstepData.class);
    private final YoInteger numberOfUpcomingFootsteps;
 
    public ReferenceCoPTrajectoryGenerator(String namePrefix, SmoothCMPPlannerParameters plannerParameters, BipedSupportPolygons bipedSupportPolygons,
@@ -109,23 +129,26 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       this.transferSplitFractions = transferSplitFractions;
 
       EnumMap<CoPPointName, Double> maxCoPOffsets = plannerParameters.getMaxCoPForwardOffsetsFootFrame();
-      EnumMap<CoPPointName, Double>  minCoPOffsets = plannerParameters.getMinCoPForwardOffsetsFootFrame();
-
-      for (CoPPointName copPointName : plannerParameters.getCoPPointsToPlan())
-      {         
-         YoDouble maxCoPOffset = new YoDouble("maxCoPForwardOffset" + copPointName.toString(), registry);
-         YoDouble minCoPOffset = new YoDouble("minCoPForwardOffset" + copPointName.toString(), registry);
-         maxCoPOffset.set(maxCoPOffsets.get(copPointName));
-         minCoPOffset.set(minCoPOffsets.get(copPointName));
-         this.maxCoPOffsets.put(copPointName, maxCoPOffset);
-         this.minCoPOffsets.put(copPointName, minCoPOffset);
+      EnumMap<CoPPointName, Double> minCoPOffsets = plannerParameters.getMinCoPForwardOffsetsFootFrame();
+      this.copPointList = plannerParameters.getCoPPointsToPlan();
+      for (int i = 0; i < copPointList.length; i++)
+      {
+         YoDouble maxCoPOffset = new YoDouble("maxCoPForwardOffset" + copPointList[i].toString(), registry);
+         YoDouble minCoPOffset = new YoDouble("minCoPForwardOffset" + copPointList[i].toString(), registry);
+         maxCoPOffset.set(maxCoPOffsets.get(copPointList[i]));
+         minCoPOffset.set(minCoPOffsets.get(copPointList[i]));
+         this.maxCoPOffsets.put(copPointList[i], maxCoPOffset);
+         this.minCoPOffsets.put(copPointList[i], minCoPOffset);
       }
       safeDistanceFromCoPToSupportEdges = new YoDouble(namePrefix + "SafeDistanceFromCoPToSupportEdges", registry);
       stepLengthToCoPOffsetFactor = new YoDouble(namePrefix + "StepLengthToCMPOffsetFactor", registry);
 
       percentageChickenSupport = new YoDouble("PercentageChickenSupport", registry);
-      percentageChickenSupport.set(0.5);
-            
+      percentageChickenSupport.set(plannerParameters.getPercentageChickenSupport());
+
+      this.entryCoPPointName = plannerParameters.getEntryCoPName();
+      this.exitCoPPointName = plannerParameters.getExitCoPName();
+
       soleZUpFrames = bipedSupportPolygons.getSoleZUpFrames();
       for (RobotSide robotSide : RobotSide.values)
       {
@@ -135,49 +158,53 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
 
          String sidePrefix = robotSide.getCamelCaseNameForMiddleOfExpression();
          EnumMap<CoPPointName, YoFrameVector2d> copUserOffsets = new EnumMap<>(CoPPointName.class);
-         
-         for(CoPPointName copPointName : plannerParameters.getCoPPointsToPlan())
+
+         for (int i = 0; i < copPointList.length; i++)
          {
-            YoFrameVector2d copUserOffset = new YoFrameVector2d(namePrefix + sidePrefix + "CoPConstantOffset" + copPointName.toString(), null, registry);
-            copUserOffsets.put(copPointName, copUserOffset);
+            YoFrameVector2d copUserOffset = new YoFrameVector2d(namePrefix + sidePrefix + "CoPConstantOffset" + copPointList[i].toString(), null, registry);
+            copUserOffsets.put(copPointList[i], copUserOffset);
          }
          this.copUserOffsets.put(robotSide, copUserOffsets);
       }
-      
+
       this.numberOfPointsPerFoot = new YoInteger(namePrefix + "NumberOfPointsPerFootstep", registry);
       setNumberOfPointsPerFoot(plannerParameters.getNumberOfWayPointsPerFoot());
 
       this.numberOfFootstepsToConsider = new YoInteger(namePrefix + "NumberOfFootstepsToConsider", registry);
       setNumberOfFootstepsToConsider(plannerParameters.getNumberOfFootstepsToConsider());
-      
+
       this.orderOfSplineInterpolation = new YoEnum<>(namePrefix + "OrderOfSplineInterpolation", registry, CoPSplineType.class);
       this.orderOfSplineInterpolation.set(plannerParameters.getOrderOfCoPInterpolation());
 
       isDoneWalking = new YoBoolean(namePrefix + "IsDoneWalking", registry);
 
-      ReferenceFrame[] framesToRegister = new ReferenceFrame[] {worldFrame, bipedSupportPolygons.getMidFeetZUpFrame(), soleZUpFrames.get(RobotSide.LEFT), soleZUpFrames.get(RobotSide.RIGHT)};
+      ReferenceFrame[] framesToRegister = new ReferenceFrame[] {worldFrame, bipedSupportPolygons.getMidFeetZUpFrame(), soleZUpFrames.get(RobotSide.LEFT),
+            soleZUpFrames.get(RobotSide.RIGHT)};
       // Need two additional CoPPoints in Foot to store the initial and final footstep CoPs
       copLocationWaypoints.add(new CoPPointsInFoot(0, framesToRegister, parentRegistry));
-      for (int i = 1 ; i <= this.numberOfFootstepsConsidered; i++)
+      for (int i = 1; i <= this.numberOfFootstepsConsidered; i++)
       {
          copLocationWaypoints.add(new CoPPointsInFoot(i, framesToRegister, registry));
       }
       copLocationWaypoints.add(new CoPPointsInFoot(this.numberOfFootstepsConsidered + 1, framesToRegister, parentRegistry));
-      
+
       for (int i = 0; i < this.numberOfFootstepsConsidered; i++)
       {
-         TransferCoPTrajectory transferCoPTrajectory = new TransferCoPTrajectory(namePrefix, i, transferDurations.get(i), transferSplitFractions.get(i), registry);
-         SwingCoPTrajectory swingCoPTrajectory = new SwingCoPTrajectory(namePrefix, i, swingDurations.get(i), swingSplitFractions.get(i), swingDurationShiftFractions.get(i), registry);
+         TransferCoPTrajectory transferCoPTrajectory = new TransferCoPTrajectory(namePrefix, i, transferDurations.get(i), transferSplitFractions.get(i),
+                                                                                 registry);
+         SwingCoPTrajectory swingCoPTrajectory = new SwingCoPTrajectory(namePrefix, i, swingDurations.get(i), swingSplitFractions.get(i),
+                                                                        swingDurationShiftFractions.get(i), registry);
          transferCoPTrajectories.add(transferCoPTrajectory);
          swingCoPTrajectories.add(swingCoPTrajectory);
       }
       // Also save the final transfer trajectory
-      TransferCoPTrajectory transferCoPTrajectory = new TransferCoPTrajectory(namePrefix, numberOfFootstepsConsidered, transferDurations.get(numberOfFootstepsConsidered), transferSplitFractions.get(numberOfFootstepsConsidered), registry);
+      TransferCoPTrajectory transferCoPTrajectory = new TransferCoPTrajectory(namePrefix, numberOfFootstepsConsidered,
+                                                                              transferDurations.get(numberOfFootstepsConsidered),
+                                                                              transferSplitFractions.get(numberOfFootstepsConsidered), registry);
       transferCoPTrajectories.add(transferCoPTrajectory);
 
       this.numberOfUpcomingFootsteps = new YoInteger(namePrefix + "NumberOfUpcomingFootsteps", registry);
-      this.numberOfUpcomingFootsteps.set(0);
-      parentRegistry.addChild(registry);           
+      parentRegistry.addChild(registry);
       initializeParameters(plannerParameters);
       clear();
    }
@@ -202,8 +229,11 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       stepLengthToCoPOffsetFactor.set(parameters.getStepLengthToCoPOffsetFactor());
 
       EnumMap<CoPPointName, Vector2D> copOffsets = parameters.getCoPOffsetsFootFrame();
-      for(CoPPointName copPointName : parameters.getCoPPointsToPlan())
-         setSymmetricCoPConstantOffsets(copPointName, copOffsets.get(copPointName));
+      CoPPointName[] copPointList = parameters.getCoPPointsToPlan();
+      for (int i = 0; i < copPointList.length; i++)
+      {
+         setSymmetricCoPConstantOffsets(copPointList[i], copOffsets.get(copPointList[i]));
+      }
    }
 
    @Override
@@ -223,18 +253,18 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       for (int footIndex = 0; footIndex < copLocationWaypoints.size(); footIndex++)
       {
          CoPPointsInFoot copPointsInFoot = copLocationWaypoints.get(footIndex);
-         
-         for (CoPPointName copPointName : copPointsInFoot.getCoPPointList())
+         List<CoPPointName> copPointNames = copPointsInFoot.getCoPPointList();
+         for (int i = 0; i < copPointNames.size(); i++)
          {
-            YoGraphicPosition copViz = new YoGraphicPosition(footIndex + "Foot CoP Waypoint" + copPointName.toString(),
-                                                             copPointsInFoot.getWaypointInWorldFrameReadOnly(copPointName), COP_POINT_SIZE,
+            YoGraphicPosition copViz = new YoGraphicPosition(footIndex + "Foot CoP Waypoint" + copPointNames.get(i).toString(),
+                                                             copPointsInFoot.getWaypointInWorldFrameReadOnly(copPointNames.get(i)), COP_POINT_SIZE,
                                                              YoAppearance.Green(), GraphicType.BALL);
             yoGraphicsList.add(copViz);
             artifactList.add(copViz.createArtifact());
          }
       }
    }
-   
+
    @Override
    public void updateListeners()
    {
@@ -250,13 +280,13 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       desiredCoPPosition.setToNaN();
       desiredCoPVelocity.setToNaN();
       desiredCoPAcceleration.setToNaN();
-      
-      for (int i = 0; i < numberOfFootstepsConsidered; i++)
-      {
+      footstepIndex = 0;
+      for (int i = 0; i < copLocationWaypoints.size(); i++)
          copLocationWaypoints.get(i).reset();
+      for (int i = 0; i < transferCoPTrajectories.size(); i++)
          transferCoPTrajectories.get(i).reset();
+      for (int i = 0; i < swingCoPTrajectories.size(); i++)
          swingCoPTrajectories.get(i).reset();
-      }
    }
 
    @Override
@@ -269,7 +299,7 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    public void initializeForTransfer(double currentTime)
    {
       this.initialTime = currentTime;
-      this.activeTrajectory = transferCoPTrajectories.get(0);      
+      this.activeTrajectory = transferCoPTrajectories.get(0);
    }
 
    @Override
@@ -282,8 +312,8 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    @Override
    public void update(double currentTime)
    {
-      if(activeTrajectory != null)
-         activeTrajectory.update(currentTime - this.initialTime, desiredCoPPosition, desiredCoPVelocity, desiredCoPAcceleration); 
+      if (activeTrajectory != null)
+         activeTrajectory.update(currentTime - this.initialTime, desiredCoPPosition, desiredCoPVelocity, desiredCoPAcceleration);
    }
 
    @Override
@@ -302,7 +332,7 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    @Override
    public void getDesiredCenterOfPressure(YoFramePoint desiredCoPToPack)
    {
-      desiredCoPToPack.set(desiredCoPPosition);      
+      desiredCoPToPack.set(desiredCoPPosition);
    }
 
    @Override
@@ -315,134 +345,361 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    @Override
    public void computeReferenceCoPsStartingFromDoubleSupport(boolean atAStop, RobotSide transferToSide)
    {
-      // TODO Auto-generated method stub
-      
+      footstepIndex = 0;
+      updateFootPolygons();
+      // Put first CoP as per chicken support computations in case starting from rest
+      if (atAStop || numberOfUpcomingFootsteps.getIntegerValue() == 0)
+      {
+         updateDoubleSupportPolygon(currentSupportFootPolygon, currentSwingFootInitialPolygon);
+         computeMidFeetPointWithChickenSupportForInitialTransfer(tempFramePoint);
+         copLocationWaypoints.get(footstepIndex).addAndSetIncludingFrame(CoPPointName.MIDFEET_COP, tempFramePoint);
+      }
+      // Put first CoP at the exitCoP of the swing foot if not starting from rest 
+      else
+      {
+         computeExitCoP(tempFramePoint, upcomingFootstepsData.get(footstepIndex).getSupportSide());
+         copLocationWaypoints.get(footstepIndex).addAndSetIncludingFrame(exitCoPPointName, tempFramePoint);
+      }
+      computeCoPPointsForUpcomingFootsteps(footstepIndex + 1);
    }
 
    @Override
    public void computeReferenceCoPsStartingFromSingleSupport(RobotSide supportSide)
    {
-      // TODO Auto-generated method stub
-      
+      footstepIndex = 0;      
+      // Do nothing if no footsteps planned
+      if (numberOfUpcomingFootsteps.getIntegerValue() == 0)
+         return;
+      else
+      {
+         computeCoPPointsForUpcomingFootsteps(footstepIndex);
+      }
+   }
+
+   private void computeMidFeetPointWithChickenSupportForInitialTransfer(FramePoint framePointToPack)
+   {
+      computeMidFeetPointWithChickenSupport(framePointToPack, currentSupportFootPolygon, currentSwingFootInitialPolygon);
+   }
+   
+   private void computeMidFeetPointWithChickenSupportForFinalTransfer(FramePoint framePointToPack)
+   {
+      computeMidFeetPointWithChickenSupport(framePointToPack, currentSupportFootPolygon, currentSwingFootFinalPolygon);      
+   }
+   
+   /**
+    * Assumes foot polygon and double support polygon has been udpated
+    * @param framePointToPack
+    * @param transferToSide
+    */
+   private void computeMidFeetPointWithChickenSupport(FramePoint framePointToPack, FrameConvexPolygon2d supportFootPolygon, FrameConvexPolygon2d swingFootPolygon)
+   {      
+      this.tempDouble = MathTools.clamp(percentageChickenSupport.getDoubleValue(), 0.0, 1.0);
+      if (this.tempDouble < 0.5)
+      {
+         this.tempDouble *= 2.0;
+         this.framePolygonReference = supportFootPolygon;
+
+      }
+      else
+      {
+         this.tempDouble = (0.5 - this.tempDouble) * 2.0;
+         this.framePolygonReference = swingFootPolygon;
+      }
+      this.currentDoubleSupportPolygon.changeFrame(worldFrame);
+      this.framePolygonReference.changeFrame(worldFrame);
+      this.tempFramePoint2d.interpolate(this.currentDoubleSupportPolygon.getCentroid(), this.framePolygonReference.getCentroid(), this.tempDouble);
+      framePointToPack.setXYIncludingFrame(tempFramePoint2d);
+   }
+
+   /**
+    * Calculates the exit CoP for a given footstep
+    * @param framePointToPack
+    * @param robotSide
+    */
+   private void computeExitCoP(FramePoint framePointToPack, RobotSide supportSide)
+   {
+      computeCoPPointLocation(tempFramePoint2d, currentSwingFootInitialPolygon, currentSupportFootPolygon,
+                              copUserOffsets.get(supportSide.getOppositeSide()).get(exitCoPPointName).getX(), copUserOffsets.get(supportSide.getOppositeSide()).get(exitCoPPointName).getY(),
+                              minCoPOffsets.get(exitCoPPointName).getDoubleValue(), maxCoPOffsets.get(exitCoPPointName).getDoubleValue(),
+                              stepLengthToCoPOffsetFactor.getDoubleValue(), safeDistanceFromCoPToSupportEdges.getDoubleValue());
+      framePointToPack.setXYIncludingFrame(tempFramePoint2d);
+      framePointToPack.changeFrame(worldFrame);
+   }
+
+   private void computeCoPPointsForUpcomingFootsteps(int copLocationIndex)
+   {
+      int numberOfUpcomingFootsteps = Math.min(this.numberOfFootstepsConsidered, this.numberOfUpcomingFootsteps.getIntegerValue());
+      for (int i = 0; i < numberOfUpcomingFootsteps; i++)
+      {
+         updateFootPolygons();
+         computeCoPPointsForFootstep(copLocationIndex);
+         footstepIndex++;
+         copLocationIndex++;
+      }
+      updateDoubleSupportPolygon(currentSupportFootPolygon, currentSwingFootFinalPolygon);      
+      computeMidFeetPointWithChickenSupportForFinalTransfer(tempFramePoint);
+      copLocationWaypoints.get(copLocationIndex).addAndSetIncludingFrame(CoPPointName.MIDFEET_COP, tempFramePoint);
+   }
+
+   /**
+    * Assumes all the support polygons have been set accordingly and computes the CoP points for the current footstep
+    */
+   private void computeCoPPointsForFootstep(int copLocationsIndex)
+   {
+      this.currentSupportSide = upcomingFootstepsData.get(footstepIndex).getSupportSide();
+      for (int i = 0; i < copPointList.length; i++)
+      {
+         computeCoPPointLocation(tempFramePoint2d, currentSupportFootPolygon, currentSwingFootFinalPolygon,
+                                 copUserOffsets.get(this.currentSupportSide).get(copPointList[i]).getX(),
+                                 copUserOffsets.get(this.currentSupportSide).get(copPointList[i]).getY(), minCoPOffsets.get(copPointList[i]).getDoubleValue(),
+                                 maxCoPOffsets.get(copPointList[i]).getDoubleValue(), stepLengthToCoPOffsetFactor.getDoubleValue(),
+                                 safeDistanceFromCoPToSupportEdges.getDoubleValue());
+         tempFramePoint.setXYIncludingFrame(tempFramePoint2d);
+         copLocationWaypoints.get(copLocationsIndex).addAndSetIncludingFrame(copPointList[i], tempFramePoint);
+      }
+   }
+
+   /**
+    * Generic implementation of CoP calculation. Performs 
+    * <ol> 
+    * <li> calculation of step length offset factor in X axis </li>
+    * <li> adding the specified CoP offsets in both axes
+    * <li> constraining to min/max offsets </li>
+    * <li> constraining to safe distance within support foot polygon </li> </ol>
+    * in that order
+    * @param copPointToPlan
+    * @param supportFoot
+    * @param swingFootEstimatedFinalLocation
+    * @param xOffset
+    * @param yOffset
+    * @param maxXOffset
+    * @param minXOffset
+    * @param stepLengthToCoPOffsetFactor
+    */
+   private void computeCoPPointLocation(FramePoint2d copPointToPlan, FrameConvexPolygon2d supportFoot, FrameConvexPolygon2d swingFootEstimatedFinalLocation,
+                                        double xOffset, double yOffset, double minXOffset, double maxXOffset, double stepLengthToCoPOffsetFactor,
+                                        double safeDistanceFromSupportPolygonEdges)
+   {
+      // Calculating the CoP point and constraining to min/max X axis offsets
+      this.tempDouble = MathTools.clamp(stepLengthToCoPOffsetFactor * (swingFootEstimatedFinalLocation.getCentroid().getX() - supportFoot.getCentroid().getX())
+            + xOffset, minXOffset, maxXOffset);      
+      copPointToPlan.setIncludingFrame(supportFoot.getCentroid());
+      copPointToPlan.add(tempDouble, yOffset);
+
+      constrainToSupportPolygon(copPointToPlan, supportFoot, safeDistanceFromSupportPolygonEdges);
+   }
+
+   /**
+    * Constrains the specified CoP point to a safe distance within the specified support polygon by projection
+    * @param copPointToConstrain
+    * @param supportFoot
+    * @param safeDistanceFromSupportPolygonEdges
+    */
+   private void constrainToSupportPolygon(FramePoint2d copPointToConstrain, FrameConvexPolygon2d supportPolygon, double safeDistanceFromSupportPolygonEdges)
+   {
+      polygonShrinker.shrinkConstantDistanceInto(supportPolygon, safeDistanceFromSupportPolygonEdges, tempPolygon);
+      tempPolygon.orthogonalProjection(copPointToConstrain);
+   }
+
+   /**
+    * Updates the variable {@code currentDoubleSupportPolygon} from the specified swing and support polygons 
+    */
+   private void updateDoubleSupportPolygon(FrameConvexPolygon2d supportFootPolygon, FrameConvexPolygon2d swingFootPolygon)
+   {
+      currentDoubleSupportPolygon.setIncludingFrame(supportFootPolygon);
+      currentDoubleSupportPolygon.changeFrame(worldFrame);
+      tempPolygon.setIncludingFrame(swingFootPolygon);
+      tempPolygon.changeFrame(worldFrame);
+      currentDoubleSupportPolygon.addVertices(tempPolygon);
+      currentDoubleSupportPolygon.update();
+   }
+
+   /**
+    * Updates the swing and support foot polygons based on footstepIndex
+    * <p> Has no memory of the previous state so should be used carefully </p>
+    */
+   private void updateFootPolygons()
+   {
+      switch (footstepIndex)
+      {
+      case 0:
+         initializeFootPolygons();
+         break;
+      default:
+         if (upcomingFootstepsData.get(footstepIndex).getSwingSide() == upcomingFootstepsData.get(footstepIndex - 1).getSupportSide()) // the normal way 
+         {
+            currentSwingFootInitialPolygon.setIncludingFrame(currentSupportFootPolygon);
+            currentSupportFootPolygon.setIncludingFrame(currentSwingFootFinalPolygon);
+         }
+         else
+         {
+            currentSwingFootInitialPolygon.setIncludingFrame(currentSwingFootFinalPolygon);
+         }
+         setFootPolygonFromFootstep(currentSwingFootFinalPolygon, footstepIndex);
+      }
+   }
+
+   /**
+    * Initialize the swing and support foot polygons based on footstep index 
+    */
+   private void initializeFootPolygons()
+   {
+      currentFootstepData = upcomingFootstepsData.get(footstepIndex);
+      switch (footstepIndex)
+      {
+      case 0:
+         setFootPolygonFromCurrentState(currentSwingFootInitialPolygon, currentFootstepData.getSwingSide());
+         setFootPolygonFromCurrentState(currentSupportFootPolygon, currentFootstepData.getSupportSide());
+         setFootPolygonFromFootstep(currentSwingFootFinalPolygon, footstepIndex);
+         break;
+      case 1:
+         setFootPolygonFromCurrentState(currentSwingFootInitialPolygon, currentFootstepData.getSwingSide());
+         setFootPolygonFromFootstep(currentSupportFootPolygon, footstepIndex - 1);
+         setFootPolygonFromFootstep(currentSwingFootFinalPolygon, footstepIndex);
+         break;
+      default:
+         setFootPolygonFromFootstep(currentSwingFootInitialPolygon, footstepIndex - 2);
+         setFootPolygonFromFootstep(currentSupportFootPolygon, footstepIndex - 1);
+         setFootPolygonFromFootstep(currentSwingFootFinalPolygon, footstepIndex);
+      }
+   }
+
+   private void setFootPolygonFromFootstep(FrameConvexPolygon2d framePolygonToPack, int footstepIndex)
+   {
+      framePolygonToPack.clear(upcomingFootstepsData.get(footstepIndex).getFootstep().getSoleReferenceFrame());
+      framePolygonToPack.addVertices(defaultFootPolygons.get(upcomingFootstepsData.get(footstepIndex).getSwingSide()));
+      framePolygonToPack.update();
+      framePolygonToPack.changeFrame(worldFrame);
+   }
+
+   private void setFootPolygonFromCurrentState(FrameConvexPolygon2d framePolygonToPack, RobotSide robotSide)
+   {
+      framePolygonToPack.setIncludingFrame(supportFootPolygonsInSoleZUpFrames.get(robotSide));
+      framePolygonToPack.update();
+      framePolygonToPack.changeFrame(worldFrame);
    }
 
    @Override
    public void removeFootstepQueueFront()
    {
-      // TODO Auto-generated method stub
-      
+      removeFootstep(0);
    }
 
    @Override
    public void removeFootstepQueueFront(int numberOfFootstepsToRemove)
    {
-      // TODO Auto-generated method stub
-      
+      for (int i = 0; i < numberOfFootstepsToRemove; i++)
+      {
+         removeFootstep(0);
+         numberOfUpcomingFootsteps.decrement();
+      }
    }
 
    @Override
    public void removeFootstep(int index)
    {
-      // TODO Auto-generated method stub
-      
+      upcomingFootstepsData.remove(index);
+      numberOfUpcomingFootsteps.decrement();
    }
 
    @Override
    public boolean isDoneWalking()
    {
-      // TODO Auto-generated method stub
-      return false;
+      return isDoneWalking.getBooleanValue();
    }
 
    @Override
    public void setSafeDistanceFromSupportEdges(double distance)
    {
-      // TODO Auto-generated method stub
-      
+      safeDistanceFromCoPToSupportEdges.set(distance);
    }
 
    @Override
    public List<CoPPointsInFoot> getWaypoints()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return copLocationWaypoints;
    }
 
    @Override
    public List<? extends CoPTrajectory> getTransferCoPTrajectories()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return transferCoPTrajectories;
    }
 
    @Override
    public List<? extends CoPTrajectory> getSwingCoPTrajectories()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return swingCoPTrajectories;
    }
 
    @Override
    public void addFootstepToPlan(Footstep footstep, FootstepTiming timing)
    {
-      // TODO Auto-generated method stub
-      
+      if (footstep != null && timing != null)
+      {
+         if (!footstep.getSoleReferenceFrame().getTransformToRoot().containsNaN())
+         {
+            upcomingFootstepsData.add().set(footstep, timing);
+            numberOfUpcomingFootsteps.increment();
+         }
+         else
+            PrintTools.warn(this, "Received bad footstep: " + footstep);
+      }
    }
 
    @Override
    public void setInitialCoPPosition(FramePoint2d initialCoPPosition)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setInitialCoPPosition(FramePoint initialCoPPosition)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setInitialCoPVelocity(FrameVector2d intialCoPVelocity)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setInitialCoPVelocity(FrameVector intialCoPVelocity)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setInitialCoPAcceleration(FrameVector2d initialCoPAcceleration)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setInitialCoPAcceleration(FrameVector initialCoPAcceleration)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setFinalCoPVelocity(FrameVector finalCoPVelocity)
    {
       // TODO Auto-generated method stub
-      
+
    }
 
    @Override
    public void setFinalCoPVelocity(FrameVector2d finalCoPVelocity)
    {
       // TODO Auto-generated method stub
-      
-   }
 
+   }
 }
