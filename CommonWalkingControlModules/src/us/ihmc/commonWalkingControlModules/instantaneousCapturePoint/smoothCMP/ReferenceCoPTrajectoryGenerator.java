@@ -40,6 +40,12 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+// TODO 1) Fix the initial heel CoP support foot bug and add the Ball CoP for initial swing position (needed for angular momentum computation)
+// TODO 2) Allow min-max constraints for each CoP point to be configured from the planner parameters
+// TODO 3) Allow step length to CoP offsets for each CoP point to be configured from the planner parameters
+// TODO 4) Allow constrain CoP to support foot polygon to be configured from planner parameters
+// TODO 5) Modify initializeParamters() to have only things that should be adjusted on the fly there
+
 public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryPlannerInterface, ReferenceCoPTrajectoryGeneratorInterface
 {
    // Standard declarations
@@ -224,7 +230,6 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
    @Override
    public void initializeParameters(SmoothCMPPlannerParameters parameters)
    {
-      // TODO modify to have things that should be adjusted on the fly here
       safeDistanceFromCoPToSupportEdges.set(parameters.getCoPSafeDistanceAwayFromSupportEdges());
       stepLengthToCoPOffsetFactor.set(parameters.getStepLengthToCoPOffsetFactor());
 
@@ -361,19 +366,20 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
          copLocationWaypoints.get(footstepIndex).addAndSetIncludingFrame(exitCoPPointName, tempFramePoint);
       }
       computeCoPPointsForUpcomingFootsteps(footstepIndex + 1);
+      generateTrajectoriesFromWaypoints();
    }
 
    @Override
    public void computeReferenceCoPsStartingFromSingleSupport(RobotSide supportSide)
    {
       footstepIndex = 0;      
-      // Do nothing if no footsteps planned
       if (numberOfUpcomingFootsteps.getIntegerValue() == 0)
          return;
       else
       {
          computeCoPPointsForUpcomingFootsteps(footstepIndex);
       }
+      generateTrajectoriesFromWaypoints();
    }
 
    private void computeMidFeetPointWithChickenSupportForInitialTransfer(FramePoint framePointToPack)
@@ -398,7 +404,6 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       {
          this.tempDouble *= 2.0;
          this.framePolygonReference = supportFootPolygon;
-
       }
       else
       {
@@ -449,7 +454,20 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       this.currentSupportSide = upcomingFootstepsData.get(footstepIndex).getSupportSide();
       for (int i = 0; i < copPointList.length; i++)
       {
-         computeCoPPointLocation(tempFramePoint2d, currentSupportFootPolygon, currentSwingFootFinalPolygon,
+         if(copPointList[i] == CoPPointName.BALL_COP)
+         {
+            framePolygonReference = currentSwingFootFinalPolygon;            
+         }
+         else if(copPointList[i] == CoPPointName.HEEL_COP)
+         {
+            framePolygonReference = currentSwingFootInitialPolygon;            
+         }
+         else
+         {
+            framePolygonReference = currentSupportFootPolygon;
+         }
+         
+         computeCoPPointLocation(tempFramePoint2d, currentSupportFootPolygon, framePolygonReference,
                                  copUserOffsets.get(this.currentSupportSide).get(copPointList[i]).getX(),
                                  copUserOffsets.get(this.currentSupportSide).get(copPointList[i]).getY(), minCoPOffsets.get(copPointList[i]).getDoubleValue(),
                                  maxCoPOffsets.get(copPointList[i]).getDoubleValue(), stepLengthToCoPOffsetFactor.getDoubleValue(),
@@ -469,19 +487,19 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
     * in that order
     * @param copPointToPlan
     * @param supportFoot
-    * @param swingFootEstimatedFinalLocation
+    * @param swingFootEstimatedLocation
     * @param xOffset
     * @param yOffset
     * @param maxXOffset
     * @param minXOffset
     * @param stepLengthToCoPOffsetFactor
     */
-   private void computeCoPPointLocation(FramePoint2d copPointToPlan, FrameConvexPolygon2d supportFoot, FrameConvexPolygon2d swingFootEstimatedFinalLocation,
+   private void computeCoPPointLocation(FramePoint2d copPointToPlan, FrameConvexPolygon2d supportFoot, FrameConvexPolygon2d swingFootEstimatedLocation,
                                         double xOffset, double yOffset, double minXOffset, double maxXOffset, double stepLengthToCoPOffsetFactor,
                                         double safeDistanceFromSupportPolygonEdges)
    {
       // Calculating the CoP point and constraining to min/max X axis offsets
-      this.tempDouble = MathTools.clamp(stepLengthToCoPOffsetFactor * (swingFootEstimatedFinalLocation.getCentroid().getX() - supportFoot.getCentroid().getX())
+      this.tempDouble = MathTools.clamp(stepLengthToCoPOffsetFactor * (swingFootEstimatedLocation.getCentroid().getX() - supportFoot.getCentroid().getX())
             + xOffset, minXOffset, maxXOffset);      
       copPointToPlan.setIncludingFrame(supportFoot.getCentroid());
       copPointToPlan.add(tempDouble, yOffset);
@@ -579,6 +597,15 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
       framePolygonToPack.changeFrame(worldFrame);
    }
 
+   private void generateTrajectoriesFromWaypoints()
+   {
+      for(int i = 0; i < copLocationWaypoints.size(); i++)
+      {
+         List<CoPPointName> copPointNameList = copLocationWaypoints.get(0).getCoPPointList();
+         
+      }
+   }
+   
    @Override
    public void removeFootstepQueueFront()
    {
@@ -645,61 +672,5 @@ public class ReferenceCoPTrajectoryGenerator implements CoPPolynomialTrajectoryP
          else
             PrintTools.warn(this, "Received bad footstep: " + footstep);
       }
-   }
-
-   @Override
-   public void setInitialCoPPosition(FramePoint2d initialCoPPosition)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setInitialCoPPosition(FramePoint initialCoPPosition)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setInitialCoPVelocity(FrameVector2d intialCoPVelocity)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setInitialCoPVelocity(FrameVector intialCoPVelocity)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setInitialCoPAcceleration(FrameVector2d initialCoPAcceleration)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setInitialCoPAcceleration(FrameVector initialCoPAcceleration)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setFinalCoPVelocity(FrameVector finalCoPVelocity)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
-   @Override
-   public void setFinalCoPVelocity(FrameVector2d finalCoPVelocity)
-   {
-      // TODO Auto-generated method stub
-
    }
 }
