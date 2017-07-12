@@ -176,7 +176,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
       icpPositionDesiredInitialMatrix.reshape(totalNumberOfSegments.getIntegerValue(), 3);
       icpPositionDesiredFinalMatrix.reshape(totalNumberOfSegments.getIntegerValue(), 3);
       
-      YoTrajectory cmpPolynomial = cmpTrajectories.get(0).getYoTrajectory(0);
+//      YoTrajectory cmpPolynomial = cmpTrajectories.get(0).getYoTrajectory(0);
 //      PrintTools.debug("Number of segments (transfer) = " + totalNumberOfSegments.getIntegerValue());
 //      PrintTools.debug("Segment time: (initial, final) = " + "(" + cmpPolynomial.getXInitial() + ", " + cmpPolynomial.getXFinal() + ")");
    }
