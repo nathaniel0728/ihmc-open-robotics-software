@@ -158,7 +158,7 @@ public class IHMCHumanoidBehaviorManager
 
       if (startYoVariableServer)
       {
-         yoVariableServer.setMainRegistry(registry, fullRobotModel, yoGraphicsListRegistry);
+         yoVariableServer.setMainRegistry(registry, fullRobotModel.getElevator(), yoGraphicsListRegistry);
          yoVariableServer.start();
       }
 
