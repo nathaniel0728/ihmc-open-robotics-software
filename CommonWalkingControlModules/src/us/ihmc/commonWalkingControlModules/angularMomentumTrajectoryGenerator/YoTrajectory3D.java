@@ -9,6 +9,7 @@ import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.robotics.MathTools;
 import us.ihmc.robotics.geometry.Direction;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 public class YoTrajectory3D
 {
@@ -355,6 +356,14 @@ public class YoTrajectory3D
    {
       return MathTools.intervalContains(timeToCheck, getInitialTime(), getFinalTime());
    }
+   
+   public int getNumberOfCoefficients()
+   {
+      if(xTrajectory.getNumberOfCoefficients() == yTrajectory.getNumberOfCoefficients() && xTrajectory.getNumberOfCoefficients() == zTrajectory.getNumberOfCoefficients())
+         return xTrajectory.getNumberOfCoefficients();
+      else
+         return -1;
+   }
 
    public void reset()
    {
@@ -377,10 +386,10 @@ public class YoTrajectory3D
       zTrajectory.setConstant(z.getZ());
    }
 
-   public void setConstant(double t0, double tFinal, Point3DReadOnly z0)
+   public void setConstant(double t0, double tFinal, Point3DReadOnly z)
    {
-      for(int index = 0; index < 3; index ++)
-         getYoTrajectory(index).setConstant(t0, tFinal, z0.getElement(index));
+      for (int index = 0; index < 3; index++)
+         getYoTrajectory(index).setConstant(t0, tFinal, z.getElement(index));
    }
    
    public void setCubic(double t0, double tFinal, Point3DReadOnly z0, Point3DReadOnly zFinal)

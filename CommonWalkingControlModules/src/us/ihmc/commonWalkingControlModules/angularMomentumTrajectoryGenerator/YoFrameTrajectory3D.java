@@ -266,11 +266,12 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
 
       setConstant(z.getPoint());
    }
-
-   public void setConstant(double t0, double tFinal, FramePoint z0)
+   
+   public void setConstant(double t0, double tFinal, FramePoint z)
    {
-      checkReferenceFrameMatch(z0);
-      setConstant(t0, tFinal, z0.getPoint());
+      z.checkReferenceFrameMatch(referenceFrame);
+
+      setConstant(t0, tFinal, z.getPoint());
    }
 
    public void setCubic(double t0, double tFinal, FramePoint z0, FramePoint zFinal)
