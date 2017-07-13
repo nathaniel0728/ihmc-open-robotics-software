@@ -40,6 +40,7 @@ ihmc.configureForIHMCOpenSourceBintrayPublish(false, "mavenJava", "maven-release
 dependencies {
     compile "us.ihmc.thirdparty.jinput:jinput:160414"
     compile ihmc.getProjectDependency(":IHMCSimulationToolkit")
+    compile ihmc.getProjectDependency(":IHMCHumanoidOperatorInterface")
 }
 
 jar {
