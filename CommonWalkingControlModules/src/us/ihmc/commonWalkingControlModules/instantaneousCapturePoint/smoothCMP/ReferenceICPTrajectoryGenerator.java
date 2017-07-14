@@ -119,7 +119,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
             cmpTrajectories.add(transferCMPTrajectory.getPolynomials().get(cmpSegment));
             totalNumberOfSegments.increment();
          }
-         
+
          durationOfPreviousPhase.set(transferCMPTrajectories.get(0).getPolynomials().get(cmpSegments-1).getFinalTime());
 
          CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.get(stepIndex);
