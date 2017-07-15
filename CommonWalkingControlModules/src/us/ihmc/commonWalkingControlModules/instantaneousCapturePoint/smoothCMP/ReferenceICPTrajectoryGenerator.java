@@ -110,6 +110,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    {
       reset();
       startTimeOfCurrentPhase.add(durationOfPreviousPhase.getDoubleValue());
+      durationOfPreviousPhase.set(transferCMPTrajectories.get(0).getPolynomials().get(transferCMPTrajectories.get(0).getNumberOfSegments()-1).getFinalTime());
 
       int numberOfSteps = Math.min(numberOfFootstepsRegistered, numberOfFootstepsToConsider.getIntegerValue());
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
@@ -122,7 +123,6 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
             totalNumberOfSegments.increment();
          }
          
-         durationOfPreviousPhase.set(transferCMPTrajectories.get(0).getPolynomials().get(cmpSegments-1).getFinalTime());
 
          CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.get(stepIndex);
          cmpSegments = swingCMPTrajectory.getNumberOfSegments();
@@ -148,6 +148,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    {
       reset();
       startTimeOfCurrentPhase.add(durationOfPreviousPhase.getDoubleValue());
+      durationOfPreviousPhase.set(swingCMPTrajectories.get(0).getPolynomials().get(swingCMPTrajectories.get(0).getNumberOfSegments()-1).getFinalTime());
 
       CMPTrajectory swingCMPTrajectory = swingCMPTrajectories.get(0);
       int cmpSegments = swingCMPTrajectory.getNumberOfSegments();
@@ -157,7 +158,6 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
          totalNumberOfSegments.increment();
       }
       
-      durationOfPreviousPhase.set(swingCMPTrajectories.get(0).getPolynomials().get(cmpSegments-1).getFinalTime());
       
       int numberOfSteps = Math.min(numberOfFootstepsRegistered, numberOfFootstepsToConsider.getIntegerValue());
       for (int stepIndex = 1; stepIndex < numberOfSteps; stepIndex++)
