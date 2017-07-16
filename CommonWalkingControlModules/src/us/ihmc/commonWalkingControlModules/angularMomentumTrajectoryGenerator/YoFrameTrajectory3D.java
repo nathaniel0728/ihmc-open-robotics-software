@@ -259,14 +259,6 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
       zTrajectory.set(other.getYoTrajectoryZ());
    }
 
-   @Deprecated
-   public void setConstant(FramePoint z)
-   {
-      z.checkReferenceFrameMatch(referenceFrame);
-
-      setConstant(z.getPoint());
-   }
-   
    public void setConstant(double t0, double tFinal, FramePoint z)
    {
       z.checkReferenceFrameMatch(referenceFrame);
@@ -298,6 +290,7 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
       checkReferenceFrameMatch(zR1);
       checkReferenceFrameMatch(zR2);
       checkReferenceFrameMatch(zFinal);
+      
       setCubicBezier(t0, tFinal, z0.getPoint(), zR1.getPoint(), zR2.getPoint(), zFinal.getPoint());
    }
 
@@ -724,5 +717,11 @@ public class YoFrameTrajectory3D extends YoTrajectory3D implements ReferenceFram
    {
       checkReferenceFrameMatch(dervTraj);
       super.getDerivative(dervTraj, order);
+   }
+   
+   public void addTimeOffset(YoFrameTrajectory3D trajToCopy, double deltaT)
+   {
+      set(trajToCopy);
+      addTimeOffset(deltaT);
    }
 }
