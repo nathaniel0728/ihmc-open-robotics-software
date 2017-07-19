@@ -2,6 +2,7 @@ package us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.smoothCMP;
 
 import us.ihmc.commonWalkingControlModules.bipedSupportPolygons.BipedSupportPolygons;
 import us.ihmc.commonWalkingControlModules.configurations.CapturePointPlannerParameters;
+import us.ihmc.commonWalkingControlModules.configurations.CoPPointName;
 import us.ihmc.commonWalkingControlModules.configurations.SmoothCMPPlannerParameters;
 import us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.AbstractICPPlanner;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsList;
@@ -13,6 +14,7 @@ import us.ihmc.humanoidRobotics.footstep.FootstepTiming;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FramePoint2d;
 import us.ihmc.robotics.math.frames.YoFramePoint2d;
+import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -32,6 +34,9 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
    private final List<YoDouble> swingDurationShiftFractions = new ArrayList<>();
 
    private final YoInteger numberOfFootstepsToConsider;
+   private final CoPPointName exitCoPName;
+   private final CoPPointName entryCoPName;
+   private final CoPPointName endCoPName;
 
    public SmoothCMPBasedICPPlanner(BipedSupportPolygons bipedSupportPolygons, SideDependentList<? extends ContactablePlaneBody> contactableFeet,
                                    CapturePointPlannerParameters icpPlannerParameters, SmoothCMPPlannerParameters plannerParameters,
@@ -67,6 +72,9 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       {
          setupVisualizers(yoGraphicsListRegistry);
       }
+      this.exitCoPName = plannerParameters.getExitCoPName();
+      this.entryCoPName = plannerParameters.getEntryCoPName();
+      this.endCoPName = plannerParameters.getEndCoPName();
    }
 
    private void setupVisualizers(YoGraphicsListRegistry yoGraphicsListRegistry)
@@ -111,62 +119,101 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
    /** {@inheritDoc} */
    public void initializeForStanding(double initialTime)
    {
-      throw new RuntimeException("to implement");
+      clearPlan();
+      isStanding.set(true);
+      isDoubleSupport.set(true);
+      this.initialTime.set(initialTime);
+      transferDurations.get(0).set(finalTransferDuration.getDoubleValue());
+      transferDurationAlphas.get(0).set(finalTransferDurationAlpha.getDoubleValue());
+      updateTransferPlan();
+      
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    public void initializeForTransfer(double initialTime)
    {
-      isDoubleSupport.set(true);
       this.initialTime.set(initialTime);
+      
+      RobotSide transferToSide = this.transferToSide.getEnumValue();
 
-      //referenceCoPGenerator.computeReferenceCoPsStartingFromDoubleSupport();
-      referenceCMPGenerator.initializeForTransfer(initialTime, referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
-      throw new RuntimeException("to implement");
+      if (isStanding.getBooleanValue())
+         referenceCoPGenerator.computeReferenceCoPsStartingFromDoubleSupport(true, transferToSide);
+      else
+         referenceCoPGenerator.computeReferenceCoPsStartingFromDoubleSupport(false, transferToSide);
+      referenceCMPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
+      referenceICPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
+      
+      referenceCoPGenerator.initializeForTransfer(this.initialTime.getDoubleValue());
+      referenceCMPGenerator.initializeForTransfer(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
+      referenceICPGenerator.initializeForTransfer(this.initialTime.getDoubleValue(), referenceCMPGenerator.getTransferCMPTrajectories(), referenceCMPGenerator.getSwingCMPTrajectories());
+      
+      isStanding.set(false);
+      isDoubleSupport.set(false);      
    }
 
    @Override
    /** {@inheritDoc} */
    public void computeFinalCoMPositionInTransfer()
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODOLater
    }
 
    @Override
    /** {@inheritDoc} */
    public void initializeForSingleSupport(double initialTime)
    {
-      referenceCMPGenerator.initializeForSwing(initialTime, referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
-      throw new RuntimeException("to implement");
+      this.initialTime.set(initialTime);
+      
+      RobotSide supportSide = this.supportSide.getEnumValue();
+            
+      referenceCoPGenerator.computeReferenceCoPsStartingFromSingleSupport(supportSide);
+      referenceCMPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
+      referenceICPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
+      
+      referenceCoPGenerator.initializeForSwing(this.initialTime.getDoubleValue());
+      referenceCMPGenerator.initializeForSwing(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
+      referenceICPGenerator.initializeForSwing(this.initialTime.getDoubleValue(), referenceCMPGenerator.getTransferCMPTrajectories(), referenceCMPGenerator.getSwingCMPTrajectories());
+      
+      isStanding.set(false);
+      isDoubleSupport.set(true);
    }
 
    @Override
    /** {@inheritDoc} */
    public void computeFinalCoMPositionInSwing()
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODOLater
    }
 
    @Override
    /** {@inheritDoc} */
    protected void updateTransferPlan()
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    protected void updateSingleSupportPlan()
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    public void compute(double time)
    {
-      throw new RuntimeException("to implement");
+      referenceCoPGenerator.update(time);
+      referenceCMPGenerator.update(time);
+      referenceICPGenerator.compute(time);
+
+      referenceCoPGenerator.getDesiredCenterOfPressure(desiredCoP, desiredCoPVelocity);
+      referenceCMPGenerator.getDesiredCMP(desiredCMP);
+      referenceICPGenerator.getLinearData(desiredICP);
+      
+      throw new RuntimeException("to implement"); //TODO
    }
 
 
@@ -174,48 +221,49 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
    /** {@inheritDoc} */
    public void getFinalDesiredCapturePointPosition(FramePoint finalDesiredCapturePointPositionToPack)
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    public void getFinalDesiredCapturePointPosition(YoFramePoint2d finalDesiredCapturePointPositionToPack)
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    public void getFinalDesiredCenterOfMassPosition(FramePoint2d finalDesiredCenterOfMassPositionToPack)
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODOLater
    }
 
    @Override
    /** {@inheritDoc} */
    public void getNextExitCMP(FramePoint entryCMPToPack)
    {
-      throw new RuntimeException("to implement");
+      List<CoPPointsInFoot> plannedCoPWaypoints = referenceCoPGenerator.getWaypoints();
+      plannedCoPWaypoints.get(1).get(this.exitCoPName).getPosition(entryCMPToPack);
    }
 
    @Override
    /** {@inheritDoc} */
    public boolean isOnExitCMP()
    {
-      throw new RuntimeException("to implement");
+      throw new RuntimeException("to implement"); //TODO
    }
 
    @Override
    /** {@inheritDoc} */
    public int getNumberOfFootstepsToConsider()
    {
-      throw new RuntimeException("to implement");
+      return numberOfFootstepsToConsider.getIntegerValue();
    }
 
    @Override
    /** {@inheritDoc} */
    public int getNumberOfFootstepsRegistered()
    {
-      throw new RuntimeException("to implement");
+      return referenceCoPGenerator.getNumberOfFootstepsRegistered();
    }
 }
