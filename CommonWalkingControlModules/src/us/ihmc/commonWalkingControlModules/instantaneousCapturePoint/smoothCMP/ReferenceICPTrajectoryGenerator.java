@@ -10,6 +10,7 @@ import us.ihmc.commons.PrintTools;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FrameVector;
 import us.ihmc.robotics.math.frames.YoFramePoint;
+import us.ihmc.robotics.math.frames.YoFrameVector;
 import us.ihmc.robotics.math.trajectories.PositionTrajectoryGenerator;
 import us.ihmc.robotics.referenceFrames.ReferenceFrame;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -46,6 +47,8 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    private FramePoint cmpPositionDesiredInitial = new FramePoint();
    private FramePoint icpPositionDesiredTerminal = new FramePoint();
    
+   private YoFramePoint icpCurrentTest;
+   private YoFramePoint icpFirstFinalTest;
    private YoFramePoint icpTerminalTest;
    private YoInteger cmpTrajectoryLength;
    private YoInteger icpTerminalLength;
@@ -82,6 +85,8 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
       localTimeInCurrentPhase = new YoDouble(namePrefix + "LocalTimeCurrentPhase", registry);
       localTimeInCurrentPhase.set(0.0);
       
+      icpCurrentTest = new YoFramePoint("ICPCurrentTest", ReferenceFrame.getWorldFrame(), registry);
+      icpFirstFinalTest = new YoFramePoint("ICPFirstFinalTest", ReferenceFrame.getWorldFrame(), registry);
       icpTerminalTest = new YoFramePoint("ICPTerminalTest", ReferenceFrame.getWorldFrame(), registry);
       cmpTrajectoryLength = new YoInteger("CMPTrajectoryLength", registry);
       icpTerminalLength = new YoInteger("ICPTerminalLength", registry);
@@ -194,7 +199,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    public void initialize()
    {
       if (!isStanding.getBooleanValue())
-      {
+      {         
          if(useDecoupled.getBooleanValue())
          {
             SmoothCapturePointTools.computeDesiredCornerPointsDecoupled(icpDesiredInitialPositions, icpDesiredFinalPositions, cmpTrajectories, omega0.getDoubleValue());
@@ -203,6 +208,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
          {
             SmoothCapturePointTools.computeDesiredCornerPoints(icpDesiredInitialPositions, icpDesiredFinalPositions, cmpTrajectories, omega0.getDoubleValue());
          }
+         
          icpPositionDesiredTerminal.set(icpDesiredFinalPositions.get(cmpTrajectories.size() - 1));
          
          icpTerminalTest.set(icpPositionDesiredTerminal);
@@ -221,6 +227,8 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
          currentSegmentIndex.set(getCurrentSegmentIndex(localTimeInCurrentPhase.getDoubleValue(), cmpTrajectories));
          YoFrameTrajectory3D cmpPolynomial3D = cmpTrajectories.get(currentSegmentIndex.getIntegerValue());
          getICPPositionDesiredFinalFromSegment(icpPositionDesiredFinalFirstSegment, currentSegmentIndex.getIntegerValue());
+         
+         icpFirstFinalTest.set(icpPositionDesiredFinalFirstSegment);
 
          if(useDecoupled.getBooleanValue())
          {
@@ -241,6 +249,7 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
                                                                            icpAccelerationDesiredCurrent);
          }
       }
+      icpCurrentTest.set(icpPositionDesiredCurrent);
    }
    
    private int getCurrentSegmentIndex(double timeInCurrentPhase, List<YoFrameTrajectory3D> cmpTrajectories)
@@ -273,9 +282,19 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    {
       positionToPack.set(icpPositionDesiredCurrent);
    }
+   
+   public void getPosition(YoFramePoint positionToPack)
+   {
+      positionToPack.set(icpPositionDesiredCurrent);
+   }
 
    @Override
    public void getVelocity(FrameVector velocityToPack)
+   {
+      velocityToPack.set(icpVelocityDesiredCurrent);
+   }
+   
+   public void getVelocity(YoFrameVector velocityToPack)
    {
       velocityToPack.set(icpVelocityDesiredCurrent);
    }
@@ -285,9 +304,21 @@ public class ReferenceICPTrajectoryGenerator implements PositionTrajectoryGenera
    {
       accelerationToPack.set(icpAccelerationDesiredCurrent);
    }
+   
+   public void getAcceleration(YoFrameVector accelerationToPack)
+   {
+      accelerationToPack.set(icpAccelerationDesiredCurrent);
+   }
 
    @Override
    public void getLinearData(FramePoint positionToPack, FrameVector velocityToPack, FrameVector accelerationToPack)
+   {
+      getPosition(positionToPack);
+      getVelocity(velocityToPack);
+      getAcceleration(accelerationToPack);
+   }
+   
+   public void getLinearData(YoFramePoint positionToPack, YoFrameVector velocityToPack, YoFrameVector accelerationToPack)
    {
       getPosition(positionToPack);
       getVelocity(velocityToPack);
