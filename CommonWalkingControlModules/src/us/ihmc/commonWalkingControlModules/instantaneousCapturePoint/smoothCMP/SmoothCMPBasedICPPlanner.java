@@ -146,7 +146,7 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       referenceICPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
       
       referenceCoPGenerator.initializeForTransfer(this.initialTime.getDoubleValue());
-      referenceCMPGenerator.initializeForTransfer(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
+      //referenceCMPGenerator.initializeForTransfer(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
       referenceICPGenerator.initializeForTransfer(this.initialTime.getDoubleValue(), referenceCMPGenerator.getTransferCMPTrajectories(), referenceCMPGenerator.getSwingCMPTrajectories());
       
       isStanding.set(false);
@@ -173,7 +173,7 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       referenceICPGenerator.setNumberOfRegisteredSteps(referenceCoPGenerator.getNumberOfFootstepsRegistered());
       
       referenceCoPGenerator.initializeForSwing(this.initialTime.getDoubleValue());
-      referenceCMPGenerator.initializeForSwing(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
+      //referenceCMPGenerator.initializeForSwing(this.initialTime.getDoubleValue(), referenceCoPGenerator.getTransferCoPTrajectories(), referenceCoPGenerator.getSwingCoPTrajectories());
       referenceICPGenerator.initializeForSwing(this.initialTime.getDoubleValue(), referenceCMPGenerator.getTransferCMPTrajectories(), referenceCMPGenerator.getSwingCMPTrajectories());
       
       isStanding.set(false);
@@ -209,9 +209,9 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
       referenceCMPGenerator.update(time);
       referenceICPGenerator.compute(time);
 
-      referenceCoPGenerator.getDesiredCenterOfPressure(desiredCoP, desiredCoPVelocity);
-      referenceCMPGenerator.getDesiredCMP(desiredCMP);
-      referenceICPGenerator.getLinearData(desiredICP);
+//      referenceCoPGenerator.getDesiredCenterOfPressure(desiredCoP, desiredCoPVelocity);
+//      referenceCMPGenerator.getDesiredCMP(desiredCMP);
+//      referenceICPGenerator.getLinearData(desiredICP);
       
       throw new RuntimeException("to implement"); //TODO
    }
