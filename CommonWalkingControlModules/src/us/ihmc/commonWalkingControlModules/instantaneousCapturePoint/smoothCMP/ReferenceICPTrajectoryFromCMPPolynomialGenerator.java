@@ -152,7 +152,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
          int cmpSegments = transferCMPTrajectory.getNumberOfSegments();
          for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
          {
-            cmpTrajectories.add(transferCMPTrajectory.getPolynomials().get(cmpSegment));
+            cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
             totalNumberOfSegments.increment();
          }
 
@@ -160,7 +160,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
          cmpSegments = swingCMPTrajectory.getNumberOfSegments();
          for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
          {
-            cmpTrajectories.add(swingCMPTrajectory.getPolynomials().get(cmpSegment));
+            cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
             totalNumberOfSegments.increment();
          }
       }
@@ -169,7 +169,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
       int cmpSegments = transferCMPTrajectory.getNumberOfSegments();
       for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
       {
-         cmpTrajectories.add(transferCMPTrajectory.getPolynomials().get(cmpSegment));
+         cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
          totalNumberOfSegments.increment();
       }
 
@@ -189,7 +189,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
       int cmpSegments = swingCMPTrajectory.getNumberOfSegments();
       for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
       {
-         cmpTrajectories.add(swingCMPTrajectory.getPolynomials().get(cmpSegment));
+         cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
          totalNumberOfSegments.increment();
       }
 
@@ -201,7 +201,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
          cmpSegments = transferCMPTrajectory.getNumberOfSegments();
          for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
          {
-            cmpTrajectories.add(transferCMPTrajectory.getPolynomials().get(cmpSegment));
+            cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
             totalNumberOfSegments.increment();
          }
 
@@ -209,7 +209,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
          cmpSegments = swingCMPTrajectory.getNumberOfSegments();
          for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
          {
-            cmpTrajectories.add(swingCMPTrajectory.getPolynomials().get(cmpSegment));
+            cmpTrajectories.add(swingCMPTrajectory.getSegment(cmpSegment));
             totalNumberOfSegments.increment();
          }
       }
@@ -218,7 +218,7 @@ public class ReferenceICPTrajectoryFromCMPPolynomialGenerator implements Positio
       cmpSegments = transferCMPTrajectory.getNumberOfSegments();
       for (int cmpSegment = 0; cmpSegment < cmpSegments; cmpSegment++)
       {
-         cmpTrajectories.add(transferCMPTrajectory.getPolynomials().get(cmpSegment));
+         cmpTrajectories.add(transferCMPTrajectory.getSegment(cmpSegment));
          totalNumberOfSegments.increment();
       }
 
