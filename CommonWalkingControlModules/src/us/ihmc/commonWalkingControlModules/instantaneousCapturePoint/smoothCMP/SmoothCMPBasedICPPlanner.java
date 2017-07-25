@@ -235,8 +235,8 @@ public class SmoothCMPBasedICPPlanner extends AbstractICPPlanner
    /** {@inheritDoc} */
    public void compute(double time)
    {
-      referenceICPGenerator.compute(time);
       update(time);
+      referenceICPGenerator.compute(time);
    }
    
    private void update(double time)
