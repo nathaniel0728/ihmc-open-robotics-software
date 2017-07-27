@@ -493,7 +493,7 @@ public class CoMIntegrationTools
       cmpPolynomial3D.compute(cmpPolynomial3D.getFinalTime());
       FramePoint nextEntryCoMCornerPoint = cmpPolynomial3D.getFramePosition();
             
-      PrintTools.debug("Step");
+//      PrintTools.debug("Step");
       for (int i = cmpPolynomials3D.size() - 1; i >= 0; i--)
       {
          cmpPolynomial3D = cmpPolynomials3D.get(i);
@@ -517,7 +517,7 @@ public class CoMIntegrationTools
 //         PrintTools.debug("Exit CoM = " + exitCoMCornerPoint.toString());
 //         cmpPolynomial3D.compute(cmpPolynomial3D.getInitialTime());
 //         PrintTools.debug("Entry CMP = " + cmpPolynomial3D.getFramePosition().toString());
-         PrintTools.debug("");
+//         PrintTools.debug("");
          
          nextEntryCoMCornerPoint = entryCoMCornerPoint;
       }
