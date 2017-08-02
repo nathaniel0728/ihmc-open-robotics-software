@@ -1280,7 +1280,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public boolean useOptimizationBasedICPController()
    {
-      return false;
+      return true; //FIXME
    }
 
    /** {@inheritDoc} */
@@ -1308,7 +1308,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public boolean controlHeightWithMomentum()
    {
-      return true;
+      return false; //FIXME
    }
 
    /** {@inheritDoc} */
@@ -1325,4 +1325,23 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       return swingTrajectoryParameters;
    }
 
+
+
+   @Override
+   public boolean rampUpAllowableToeLoadAfterContact()
+   {
+      return true; //FIXME
+   }
+
+   @Override
+   public boolean editStepTimingForReachability()
+   {
+      return true; //FIXME
+   }
+
+   @Override
+   public boolean applySecondaryJointScaleDuringSwing()
+   {
+      return true; //FIXME
+   }
 }

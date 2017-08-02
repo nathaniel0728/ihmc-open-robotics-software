@@ -39,7 +39,7 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
          return copOffsets;
 
       Vector2D entryOffset = new Vector2D(0.0, -0.005);
-      Vector2D exitOffset = new Vector2D(0.0, 0.025);
+      Vector2D exitOffset = new Vector2D(0.0, 0.015); //FIXME 0.025);
 
       entryOffset.scale(scale);
       exitOffset.scale(scale);
@@ -107,5 +107,17 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
    public double getVelocityDecayDurationWhenDone()
    {
       return 0.5;
+   }
+
+   @Override
+   public double getExitCoPForwardSafetyMarginOnToes()
+   {
+      return 0.005; //FIXME
+   }
+
+   @Override
+   public boolean putExitCoPOnToes()
+   {
+      return true; //FIXME
    }
 }

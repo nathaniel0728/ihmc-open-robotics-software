@@ -22,7 +22,7 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
    @Override
    public boolean doToeTouchdownIfPossible()
    {
-      return false;
+      return true; //FIXME
    }
 
    @Override
@@ -34,7 +34,7 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
    @Override
    public boolean doHeelTouchdownIfPossible()
    {
-      return false;
+      return true; //FIXME
    }
 
    @Override
@@ -81,5 +81,21 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
       return runningOnRealRobot ? 0.8 : 0.5; // Robert: 0.8
    }
 
+   @Override
+   public boolean useSingularityAvoidanceInSwing()
+   {
+      return false; //FIXME
+   }
 
+   @Override
+   public boolean useSingularityAvoidanceInSupport()
+   {
+      return false; //FIXME
+   }
+
+   @Override
+   public boolean addOrientationMidpointForObstacleClearance()
+   {
+      return true; //FIXME
+   }
 }

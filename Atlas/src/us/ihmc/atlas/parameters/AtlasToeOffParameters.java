@@ -22,7 +22,7 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public boolean doToeOffIfPossibleInSingleSupport()
    {
-      return false;
+      return true; //FIXME
    }
 
    @Override
@@ -49,7 +49,7 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public double getAnkleLowerLimitToTriggerToeOff()
    {
-      return -1.0;
+      return -0.75; //FIXME -1.0;
    }
 
 
@@ -64,6 +64,30 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public double getICPPercentOfStanceForDSToeOff()
    {
-      return 0.05; // JCarff ToeOff
+      return 0.20; //FIXME 0.05; // JCarff ToeOff
+   }
+
+   @Override
+   public boolean checkCoPLocationToTriggerToeOff()
+   {
+      return true; //FIXME
+   }
+
+   @Override
+   public double getCoPProximityForToeOff()
+   {
+      return 0.05; //FIXME
+   }
+
+   @Override
+   public double getICPPercentOfStanceForSSToeOff()
+   {
+      return 0.10; //FIXME
+   }
+
+   @Override
+   public double getECMPProximityForToeOff()
+   {
+      return 0.02; //FIXME
    }
 }

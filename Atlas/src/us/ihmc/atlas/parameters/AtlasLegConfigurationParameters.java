@@ -16,7 +16,7 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
    /** {@inheritDoc} */
    public boolean attemptToStraightenLegs()
    {
-      return false;
+      return true; //FIXME
    }
 
    @Override

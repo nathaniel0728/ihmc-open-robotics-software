@@ -7,7 +7,7 @@ public class LeapOfFaithParameters
     */
    public boolean scaleFootWeight()
    {
-      return false;
+      return true; //FIXME
    }
 
    /**
@@ -48,7 +48,7 @@ public class LeapOfFaithParameters
     */
    public boolean usePelvisRotation()
    {
-      return false;
+      return true; //FIXME
    }
 
    /**
@@ -96,7 +96,7 @@ public class LeapOfFaithParameters
 
    public boolean relaxPelvisControl()
    {
-      return false;
+      return true; //FIXME
    }
 
    public double getRelaxationRate()
