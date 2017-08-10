@@ -25,6 +25,7 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinemat
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand.PrivilegedConfigurationOption;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
+import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.KinematicsToolboxConfigurationMessage;
@@ -229,6 +230,11 @@ public class KinematicsToolboxController extends ToolboxController
     * the solution is sent back to the caller.
     */
    private int tickCount = 0;
+   
+   /**
+    * Counter for measurement how many times the updateInternal() is executed.
+    */
+   private int numberOfIteration = 0;
 
    /**
     * This joint reduction factors are used to limit the range of motion for each joint in the
@@ -471,6 +477,7 @@ public class KinematicsToolboxController extends ToolboxController
    protected boolean initialize()
    {
       userFeedbackCommands.clear();
+      numberOfIteration = 0;
 
       RobotConfigurationData robotConfigurationData = latestRobotConfigurationDataReference.get();
 
@@ -550,10 +557,12 @@ public class KinematicsToolboxController extends ToolboxController
       KinematicsToolboxHelper.setRobotStateFromControllerCoreOutput(controllerCore.getControllerCoreOutput(), rootJoint, oneDoFJoints);
       updateVisualization();
 
+      numberOfIteration++;
+      inverseKinematicsSolution.setNumberOfIteration(numberOfIteration);
       if (tickCount++ == numberOfTicksToSendSolution)
       { // Packing and sending the solution every N control ticks, with N = numberOfTicksToSendSolution.
          inverseKinematicsSolution.setDesiredJointState(rootJoint, oneDoFJoints);
-         inverseKinematicsSolution.setSolutionQuality(solutionQuality.getDoubleValue());
+         inverseKinematicsSolution.setSolutionQuality(solutionQuality.getDoubleValue()); 
          reportMessage(inverseKinematicsSolution);
          tickCount = 0;
       }

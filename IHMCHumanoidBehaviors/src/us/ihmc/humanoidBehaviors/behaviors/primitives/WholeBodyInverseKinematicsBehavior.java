@@ -1,5 +1,6 @@
 package us.ihmc.humanoidBehaviors.behaviors.primitives;
 
+import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.packets.KinematicsToolboxOutputStatus;
 import us.ihmc.communication.packets.KinematicsToolboxRigidBodyMessage;
 import us.ihmc.communication.packets.PacketDestination;
@@ -335,7 +336,7 @@ public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
       if (kinematicsToolboxOutputQueue.isNewPacketAvailable() && !hasSentMessageToController.getBooleanValue())
       {
          KinematicsToolboxOutputStatus newestSolution = kinematicsToolboxOutputQueue.poll();
-
+         
          double deltaSolutionQuality = currentSolutionQuality.getDoubleValue() - newestSolution.getSolutionQuality();
          boolean isSolutionStable = deltaSolutionQuality > 0.0 && deltaSolutionQuality < 1.0e-6;
          boolean isSolutionGoodEnough = newestSolution.getSolutionQuality() < solutionQualityThreshold.getDoubleValue();
@@ -348,6 +349,8 @@ public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
             }
             else if (sendSolutionToController)
             {
+               PrintTools.info("The number of iteration in toolbox is "+newestSolution.getNumberOfIteration());
+               
                solutionSentToController = newestSolution;
                outputConverter.setTrajectoryTime(trajectoryTime.getDoubleValue());
                WholeBodyTrajectoryMessage message = new WholeBodyTrajectoryMessage();

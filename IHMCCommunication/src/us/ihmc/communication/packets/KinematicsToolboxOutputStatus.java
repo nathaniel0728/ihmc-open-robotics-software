@@ -24,6 +24,8 @@ public class KinematicsToolboxOutputStatus extends StatusPacket<KinematicsToolbo
 
    /** Below 5.0e-3 seems to represent a good solution. */
    public double solutionQuality = Double.NaN;
+   
+   public int numberOfIteration = 0;
 
    public KinematicsToolboxOutputStatus(Random random)
    {
@@ -39,6 +41,8 @@ public class KinematicsToolboxOutputStatus extends StatusPacket<KinematicsToolbo
 
       desiredRootTranslation = RandomGeometry.nextVector3D32(random);
       desiredRootOrientation = RandomGeometry.nextQuaternion32(random);
+      
+      numberOfIteration = random.nextInt(10000);
    }
 
    public KinematicsToolboxOutputStatus()
@@ -78,6 +82,7 @@ public class KinematicsToolboxOutputStatus extends StatusPacket<KinematicsToolbo
       uniqueId = other.uniqueId;
       destination = other.destination;
       solutionQuality = other.solutionQuality;
+      numberOfIteration = other.numberOfIteration;
    }
 
    public void setDesiredJointState(FloatingInverseDynamicsJoint rootJoint, OneDoFJoint[] newJointData)
@@ -116,6 +121,11 @@ public class KinematicsToolboxOutputStatus extends StatusPacket<KinematicsToolbo
       this.solutionQuality = solutionQuality;
    }
 
+   public void setNumberOfIteration(int numberOfIteration)
+   {
+      this.numberOfIteration = numberOfIteration;
+   }
+   
    public float[] getJointAngles()
    {
       return desiredJointAngles;
@@ -134,6 +144,11 @@ public class KinematicsToolboxOutputStatus extends StatusPacket<KinematicsToolbo
    public double getSolutionQuality()
    {
       return solutionQuality;
+   }
+   
+   public int getNumberOfIteration()
+   {
+      return numberOfIteration;
    }
 
    @Override
