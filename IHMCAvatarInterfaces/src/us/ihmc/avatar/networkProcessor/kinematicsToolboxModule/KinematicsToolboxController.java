@@ -150,6 +150,8 @@ public class KinematicsToolboxController extends ToolboxController
     * error for the end-effectors (center of mass included) being actively controlled.
     */
    private final YoDouble solutionQuality = new YoDouble("solutionQuality", registry);
+   
+   private final YoDouble deltaSolutionQuality = new YoDouble("deltaSolutionQuality", registry);
 
    /**
     * Updated during the initialization phase, this set of two {@link YoBoolean}s is used to
@@ -235,6 +237,8 @@ public class KinematicsToolboxController extends ToolboxController
     * Counter for measurement how many times the updateInternal() is executed.
     */
    private int numberOfIteration = 0;
+   
+   private final YoInteger countOfIteration = new YoInteger("countOfIteration", registry);
 
    /**
     * This joint reduction factors are used to limit the range of motion for each joint in the
@@ -552,6 +556,9 @@ public class KinematicsToolboxController extends ToolboxController
 
       // Calculating the solution quality based on sum of all the commands' tracking error.
       solutionQuality.set(KinematicsToolboxHelper.calculateSolutionQuality(allFeedbackControlCommands, feedbackControllerDataHolder));
+      deltaSolutionQuality.set(solutionQuality.getDoubleValue() - oldSolutionQuality);
+      oldSolutionQuality = solutionQuality.getDoubleValue();
+      
 
       // Updating the the robot state from the current solution, initializing the next control tick.
       KinematicsToolboxHelper.setRobotStateFromControllerCoreOutput(controllerCore.getControllerCoreOutput(), rootJoint, oneDoFJoints);
@@ -559,6 +566,8 @@ public class KinematicsToolboxController extends ToolboxController
 
       numberOfIteration++;
       inverseKinematicsSolution.setNumberOfIteration(numberOfIteration);
+      countOfIteration.set(numberOfIteration);
+      
       if (tickCount++ == numberOfTicksToSendSolution)
       { // Packing and sending the solution every N control ticks, with N = numberOfTicksToSendSolution.
          inverseKinematicsSolution.setDesiredJointState(rootJoint, oneDoFJoints);
@@ -567,6 +576,8 @@ public class KinematicsToolboxController extends ToolboxController
          tickCount = 0;
       }
    }
+   
+   private double oldSolutionQuality = 0.0;
 
    /**
     * Updates all the reference frames and the twist calculator. This method needs to be called at

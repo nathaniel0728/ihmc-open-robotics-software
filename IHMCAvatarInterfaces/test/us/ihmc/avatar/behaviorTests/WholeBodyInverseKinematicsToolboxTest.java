@@ -18,7 +18,7 @@ import us.ihmc.avatar.testTools.DRCBehaviorTestHelper;
 import us.ihmc.communication.packetCommunicator.PacketCommunicator;
 import us.ihmc.communication.packets.PacketDestination;
 import us.ihmc.communication.util.NetworkPorts;
-import us.ihmc.continuousIntegration.ContinuousIntegrationAnnotations.ContinuousIntegrationTest;
+import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
 import us.ihmc.euclid.axisAngle.AxisAngle;
 import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.tuple3D.Point3D;
@@ -57,7 +57,7 @@ public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobo
    @After
    public void destroySimulationAndRecycleMemory()
    {
-      if (simulationTestingParameters.getKeepSCSUp())
+      if (!ContinuousIntegrationTools.isRunningOnContinuousIntegrationServer())
       {
          ThreadTools.sleepForever();
       }
@@ -100,10 +100,8 @@ public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobo
    @Test
    public void testSolvingForAHandPose() throws SimulationExceededMaximumTimeException, IOException
    {
-      BambooTools.reportTestStartedMessage(simulationTestingParameters.getShowWindows());
-
-      // simulate for a while to make sure the robot is still so small time differences between frame changes in the
-      // controller and the unit test will not affect the outcome too much.
+//      ThreadTools.sleep(10000);
+      
       boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(3.0);
       assertTrue(success);
 
@@ -151,45 +149,7 @@ public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobo
          assertTrue(success);
       }
 
-      assertFalse("Bad solution: " + ik.getSolutionQuality(), ik.hasSolverFailed());
-
-      success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
-      assertTrue(success);
-
-      String pelvisName = fullRobotModel.getPelvis().getName();
-      Quaternion controllerDesiredChestOrientation = EndToEndChestTrajectoryMessageTest.findControllerDesiredOrientation(scs, chest);
-      Quaternion controllerDesiredPelvisOrientation = EndToEndHandTrajectoryMessageTest.findControllerDesiredOrientation(pelvisName, scs);
-
-      double angleEpsilon = Math.toRadians(1.0);
-
-      EuclidCoreTestTools.assertQuaternionEqualsUsingDifference(initialChestOrientation.getQuaternion(), controllerDesiredChestOrientation, angleEpsilon);
-      EuclidCoreTestTools.assertQuaternionEqualsUsingDifference(initialPelvisOrientation.getQuaternion(), controllerDesiredPelvisOrientation, angleEpsilon);
-
-      String handName = fullRobotModel.getHand(robotSide).getName();
-      Point3D controllerDesiredHandPosition = EndToEndHandTrajectoryMessageTest.findControllerDesiredPosition(handName, scs);
-
-      Point3D handPosition = new Point3D();
-      desiredHandPose.getPosition(handPosition);
-
-      double positionEpsilon = 1.0e-4;
-      double positionDifference = handPosition.distance(controllerDesiredHandPosition);
-
-      assertTrue("Position difference: " + positionDifference, positionDifference <positionEpsilon);
-
-      BambooTools.reportTestFinishedMessage(simulationTestingParameters.getShowWindows());
-   }
-   
-
-   private boolean isOrientationEqual(Quaternion initialQuat, Quaternion finalQuat, double angleEpsilon)
-   {
-      Quaternion quatDifference = new Quaternion(initialQuat);
-      quatDifference.multiplyConjugateOther(finalQuat);
-
-      AxisAngle angleDifference = new AxisAngle();
-      angleDifference.set(quatDifference);
-      AngleTools.trimAngleMinusPiToPi(angleDifference.getAngle());
-
-      return Math.abs(angleDifference.getAngle()) < angleEpsilon;
+      
    }
 
    private void setupKinematicsToolboxModule() throws IOException
