@@ -9,7 +9,10 @@ public class KinematicsToolboxOptimizationSettings implements ControllerCoreOpti
    @Override
    public double getJointVelocityWeight()
    {
-      return 0.5;
+      /*
+       * 0.5 is original value.
+       */
+      return 2.0;
    }
 
    /** @inheritDoc */
@@ -17,13 +20,9 @@ public class KinematicsToolboxOptimizationSettings implements ControllerCoreOpti
    public double getJointAccelerationWeight()
    {
       /*
-       * 10.0 is original value.    99
-       * 0.5   33
-       * 0.01  44
-       * 1.0   44
-       * 5.0   66
+       * 10.0 is original value.
        */
-      return 5.0; 
+      return 1.0;
    }
 
    /** @inheritDoc */

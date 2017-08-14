@@ -1,6 +1,5 @@
 package us.ihmc.avatar.behaviorTests;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -10,8 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import us.ihmc.avatar.MultiRobotTestInterface;
-import us.ihmc.avatar.controllerAPI.EndToEndChestTrajectoryMessageTest;
-import us.ihmc.avatar.controllerAPI.EndToEndHandTrajectoryMessageTest;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.networkProcessor.kinematicsToolboxModule.KinematicsToolboxModule;
 import us.ihmc.avatar.testTools.DRCBehaviorTestHelper;
@@ -19,19 +16,17 @@ import us.ihmc.communication.packetCommunicator.PacketCommunicator;
 import us.ihmc.communication.packets.PacketDestination;
 import us.ihmc.communication.util.NetworkPorts;
 import us.ihmc.continuousIntegration.ContinuousIntegrationTools;
-import us.ihmc.euclid.axisAngle.AxisAngle;
-import us.ihmc.euclid.tools.EuclidCoreTestTools;
 import us.ihmc.euclid.tuple3D.Point3D;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.humanoidBehaviors.behaviors.primitives.HandTrajectoryBehavior;
 import us.ihmc.humanoidBehaviors.behaviors.primitives.WholeBodyInverseKinematicsBehavior;
+import us.ihmc.humanoidRobotics.communication.packets.manipulation.HandTrajectoryMessage;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
-import us.ihmc.robotics.geometry.AngleTools;
 import us.ihmc.robotics.geometry.FrameOrientation;
 import us.ihmc.robotics.geometry.FramePose;
 import us.ihmc.robotics.referenceFrames.ReferenceFrame;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.screwTheory.RigidBody;
-import us.ihmc.simulationConstructionSetTools.bambooTools.BambooTools;
 import us.ihmc.simulationConstructionSetTools.util.environments.CommonAvatarEnvironmentInterface;
 import us.ihmc.simulationConstructionSetTools.util.environments.FlatGroundEnvironment;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
@@ -43,7 +38,7 @@ import us.ihmc.tools.thread.ThreadTools;
 public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobotTestInterface
 {
    private static final SimulationTestingParameters simulationTestingParameters = SimulationTestingParameters.createFromEnvironmentVariables();
-   private boolean isKinematicsToolboxVisualizerEnabled = true;
+   private boolean isKinematicsToolboxVisualizerEnabled = false;
    private DRCBehaviorTestHelper drcBehaviorTestHelper;
    private KinematicsToolboxModule kinematicsToolboxModule;
    private PacketCommunicator toolboxCommunicator;
@@ -100,9 +95,16 @@ public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobo
    @Test
    public void testSolvingForAHandPose() throws SimulationExceededMaximumTimeException, IOException
    {
-//      ThreadTools.sleep(10000);
-      
-      boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(3.0);
+      /*
+       * [VelocityWeight, AccelerationWeight] = numberOfIteration. [5.0, 1.0] =
+       * 99 [0.5, 1.0] = 319 [10.0, 1.0] = 165 [3.0, 1.0] = 77 [1.0, 1.0] = 176
+       * [1.0, 0.1] = 440 [2.0, 1.0] = 88 [4.0, 1.0] = 88
+       */
+
+      if (isKinematicsToolboxVisualizerEnabled)
+         ThreadTools.sleep(10000);
+
+      boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
       assertTrue(success);
 
       RobotSide robotSide = RobotSide.RIGHT;
@@ -149,13 +151,76 @@ public abstract class WholeBodyInverseKinematicsToolboxTest implements MultiRobo
          assertTrue(success);
       }
 
-      
+   }
+
+   //   @Test
+   public void testSolvingForPoseNearSingularity() throws SimulationExceededMaximumTimeException, IOException
+   {
+      /*
+       * [VelocityWeight, AccelerationWeight] = numberOfIteration. [5.0, 1.0] =
+       * 154 [0.5, 1.0] = 1023 [10.0, 1.0] = 275 [3.0, 1.0] = 99 [1.0, 1.0] =
+       * 110 [1.0, 0.1] = 110
+       */
+      if (isKinematicsToolboxVisualizerEnabled)
+         ThreadTools.sleep(6000);
+
+      boolean success = drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(1.0);
+      assertTrue(success);
+
+      RobotSide robotSide = RobotSide.RIGHT;
+
+      SimulationConstructionSet scs = drcBehaviorTestHelper.getSimulationConstructionSet();
+
+      drcBehaviorTestHelper.updateRobotModel();
+
+      /*
+       * behavior toward singularity pose
+       */
+      double motionTime = 3.0;
+
+      HandTrajectoryBehavior behaviorTowardSingularity = new HandTrajectoryBehavior(drcBehaviorTestHelper.getBehaviorCommunicationBridge(),
+                                                                                    drcBehaviorTestHelper.getYoTime());
+
+      Point3D position = new Point3D(0.795, -0.428, 0.842);
+      Quaternion orientation = new Quaternion();
+
+      HandTrajectoryMessage handTrajectoryMessage = new HandTrajectoryMessage(robotSide, motionTime, position, orientation, ReferenceFrame.getWorldFrame());
+      behaviorTowardSingularity.setInput(handTrajectoryMessage);
+
+      drcBehaviorTestHelper.send(handTrajectoryMessage);
+      drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(motionTime);
+
+      /*
+       * behavior start nearby singularity
+       */
+      drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(0.5);
+      WholeBodyInverseKinematicsBehavior behavior = new WholeBodyInverseKinematicsBehavior(getRobotModel(), drcBehaviorTestHelper.getYoTime(),
+                                                                                           drcBehaviorTestHelper.getBehaviorCommunicationBridge(),
+                                                                                           drcBehaviorTestHelper.getSDFFullRobotModel());
+
+      ReferenceFrame handControlFrame = drcBehaviorTestHelper.getReferenceFrames().getHandFrame(robotSide);
+      System.out.println(handControlFrame.getTransformToWorldFrame());
+
+      FramePose desiredHandPose = new FramePose(handControlFrame);
+      desiredHandPose.changeFrame(ReferenceFrame.getWorldFrame());
+      desiredHandPose.prependTranslation(-0.10, 0.0, 0.10);
+
+      behavior.setTrajectoryTime(2.0);
+      behavior.setDesiredHandPose(robotSide, desiredHandPose);
+      behavior.holdCurrentChestOrientation();
+      behavior.holdCurrentPelvisOrientation();
+      behavior.holdCurrentPelvisHeight();
+
+      drcBehaviorTestHelper.dispatchBehavior(behavior);
+
+      drcBehaviorTestHelper.simulateAndBlockAndCatchExceptions(2.0);
    }
 
    private void setupKinematicsToolboxModule() throws IOException
    {
       DRCRobotModel robotModel = getRobotModel();
       kinematicsToolboxModule = new KinematicsToolboxModule(robotModel, isKinematicsToolboxVisualizerEnabled);
-      toolboxCommunicator = drcBehaviorTestHelper.createAndStartPacketCommunicator(NetworkPorts.KINEMATICS_TOOLBOX_MODULE_PORT, PacketDestination.KINEMATICS_TOOLBOX_MODULE);
+      toolboxCommunicator = drcBehaviorTestHelper.createAndStartPacketCommunicator(NetworkPorts.KINEMATICS_TOOLBOX_MODULE_PORT,
+                                                                                   PacketDestination.KINEMATICS_TOOLBOX_MODULE);
    }
 }

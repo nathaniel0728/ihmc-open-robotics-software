@@ -15,8 +15,6 @@ import us.ihmc.humanoidRobotics.communication.packets.KinematicsToolboxOutputCon
 import us.ihmc.humanoidRobotics.communication.packets.wholebody.WholeBodyTrajectoryMessage;
 import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullHumanoidRobotModelFactory;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.robotics.geometry.FrameOrientation;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FramePose;
@@ -27,6 +25,8 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.robotics.screwTheory.SelectionMatrix6D;
+import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
 
 public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
 {
@@ -230,7 +230,6 @@ public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
    @Override
    public void onBehaviorEntered()
    {
-
       System.out.println("init whole body behavior");
       isPaused.set(false);
       isStopped.set(false);
@@ -336,10 +335,9 @@ public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
       if (kinematicsToolboxOutputQueue.isNewPacketAvailable() && !hasSentMessageToController.getBooleanValue())
       {
          KinematicsToolboxOutputStatus newestSolution = kinematicsToolboxOutputQueue.poll();
-         
+
          double deltaSolutionQuality = currentSolutionQuality.getDoubleValue() - newestSolution.getSolutionQuality();
-//         boolean isSolutionStable = deltaSolutionQuality > 0.0 && deltaSolutionQuality < 1.0e-6;
-         boolean isSolutionStable = deltaSolutionQuality > 0.0 && deltaSolutionQuality < 1.0e-4;
+         boolean isSolutionStable = deltaSolutionQuality > 0.0 && deltaSolutionQuality < 1.0e-5; // It was 1.0e-6.  
          boolean isSolutionGoodEnough = newestSolution.getSolutionQuality() < solutionQualityThreshold.getDoubleValue();
          boolean sendSolutionToController = isSolutionStable && isSolutionGoodEnough;
          if (!isPaused())
@@ -350,8 +348,8 @@ public class WholeBodyInverseKinematicsBehavior extends AbstractBehavior
             }
             else if (sendSolutionToController)
             {
-               PrintTools.info("The number of iteration in toolbox is "+newestSolution.getNumberOfIteration());
-               
+               PrintTools.info("The number of iteration in toolbox is " + newestSolution.getNumberOfIteration());
+
                solutionSentToController = newestSolution;
                outputConverter.setTrajectoryTime(trajectoryTime.getDoubleValue());
                WholeBodyTrajectoryMessage message = new WholeBodyTrajectoryMessage();

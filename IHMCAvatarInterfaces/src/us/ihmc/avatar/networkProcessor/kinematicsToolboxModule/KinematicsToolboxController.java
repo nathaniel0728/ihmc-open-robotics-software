@@ -25,7 +25,6 @@ import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinemat
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand;
 import us.ihmc.commonWalkingControlModules.controllerCore.command.inverseKinematics.PrivilegedConfigurationCommand.PrivilegedConfigurationOption;
 import us.ihmc.commonWalkingControlModules.momentumBasedController.HighLevelHumanoidControllerToolbox;
-import us.ihmc.commons.PrintTools;
 import us.ihmc.communication.controllerAPI.CommandInputManager;
 import us.ihmc.communication.controllerAPI.StatusMessageOutputManager;
 import us.ihmc.communication.packets.KinematicsToolboxConfigurationMessage;
@@ -43,10 +42,6 @@ import us.ihmc.robotModels.FullHumanoidRobotModel;
 import us.ihmc.robotModels.FullRobotModelUtils;
 import us.ihmc.robotics.controllers.SE3PIDGainsInterface;
 import us.ihmc.robotics.controllers.YoSymmetricSE3PIDGains;
-import us.ihmc.yoVariables.registry.YoVariableRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
-import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.robotics.geometry.FrameOrientation;
 import us.ihmc.robotics.geometry.FramePoint;
 import us.ihmc.robotics.geometry.FramePose;
@@ -62,6 +57,10 @@ import us.ihmc.robotics.screwTheory.OneDoFJoint;
 import us.ihmc.robotics.screwTheory.RigidBody;
 import us.ihmc.sensorProcessing.communication.packets.dataobjects.RobotConfigurationData;
 import us.ihmc.sensorProcessing.frames.CommonHumanoidReferenceFrames;
+import us.ihmc.yoVariables.registry.YoVariableRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
  * {@code KinematicsToolboxController} is used as a whole-body inverse kinematics solver.
@@ -150,7 +149,9 @@ public class KinematicsToolboxController extends ToolboxController
     * error for the end-effectors (center of mass included) being actively controlled.
     */
    private final YoDouble solutionQuality = new YoDouble("solutionQuality", registry);
-   
+
+   private double oldSolutionQuality = 0.0;
+
    private final YoDouble deltaSolutionQuality = new YoDouble("deltaSolutionQuality", registry);
 
    /**
@@ -232,12 +233,12 @@ public class KinematicsToolboxController extends ToolboxController
     * the solution is sent back to the caller.
     */
    private int tickCount = 0;
-   
+
    /**
     * Counter for measurement how many times the updateInternal() is executed.
     */
    private int numberOfIteration = 0;
-   
+
    private final YoInteger countOfIteration = new YoInteger("countOfIteration", registry);
 
    /**
@@ -334,7 +335,6 @@ public class KinematicsToolboxController extends ToolboxController
          isFootInSupport.put(robotSide, new YoBoolean("is" + side + "FootInSupport", registry));
          initialFootPoses.put(robotSide, new YoFramePoseUsingQuaternions(sidePrefix + "FootInitial", worldFrame, registry));
       }
-
       setupVisualization(yoGraphicsListRegistry);
    }
 
@@ -547,8 +547,9 @@ public class KinematicsToolboxController extends ToolboxController
       FeedbackControlCommandList allFeedbackControlCommands = new FeedbackControlCommandList(controllerCoreCommand.getFeedbackControlCommandList());
 
       /*
-       * Submitting and requesting the controller core to run the feedback controllers, formulate
-       * and solve the optimization problem for this control tick.
+       * Submitting and requesting the controller core to run the feedback
+       * controllers, formulate and solve the optimization problem for this
+       * control tick.
        */
       controllerCore.reset();
       controllerCore.submitControllerCoreCommand(controllerCoreCommand);
@@ -558,7 +559,6 @@ public class KinematicsToolboxController extends ToolboxController
       solutionQuality.set(KinematicsToolboxHelper.calculateSolutionQuality(allFeedbackControlCommands, feedbackControllerDataHolder));
       deltaSolutionQuality.set(solutionQuality.getDoubleValue() - oldSolutionQuality);
       oldSolutionQuality = solutionQuality.getDoubleValue();
-      
 
       // Updating the the robot state from the current solution, initializing the next control tick.
       KinematicsToolboxHelper.setRobotStateFromControllerCoreOutput(controllerCore.getControllerCoreOutput(), rootJoint, oneDoFJoints);
@@ -567,17 +567,15 @@ public class KinematicsToolboxController extends ToolboxController
       numberOfIteration++;
       inverseKinematicsSolution.setNumberOfIteration(numberOfIteration);
       countOfIteration.set(numberOfIteration);
-      
+
       if (tickCount++ == numberOfTicksToSendSolution)
       { // Packing and sending the solution every N control ticks, with N = numberOfTicksToSendSolution.
          inverseKinematicsSolution.setDesiredJointState(rootJoint, oneDoFJoints);
-         inverseKinematicsSolution.setSolutionQuality(solutionQuality.getDoubleValue()); 
+         inverseKinematicsSolution.setSolutionQuality(solutionQuality.getDoubleValue());
          reportMessage(inverseKinematicsSolution);
          tickCount = 0;
       }
    }
-   
-   private double oldSolutionQuality = 0.0;
 
    /**
     * Updates all the reference frames and the twist calculator. This method needs to be called at
@@ -606,9 +604,9 @@ public class KinematicsToolboxController extends ToolboxController
          holdSupportFootPose.set(command.holdSupportFootPositions());
 
          /*
-          * If there is a new privileged configuration, the desired robot state is updated alongside
-          * with the privileged configuration and the initial center of mass position and foot
-          * poses.
+          * If there is a new privileged configuration, the desired robot state
+          * is updated alongside with the privileged configuration and the
+          * initial center of mass position and foot poses.
           */
          KinematicsToolboxHelper.setRobotStateFromPrivilegedConfigurationData(command, rootJoint, jointNameBasedHashCodeMap);
          if (command.hasPrivilegedJointAngles() || command.hasPrivilegedRootJointPosition() || command.hasPrivilegedRootJointOrientation())
@@ -636,9 +634,10 @@ public class KinematicsToolboxController extends ToolboxController
 
       FeedbackControlCommandList inputs = new FeedbackControlCommandList();
       /*
-       * By using the map, we ensure that there is only one command per end-effector (including the
-       * center of mass). The map is also useful for remembering commands received during the
-       * previous control ticks of the same run.
+       * By using the map, we ensure that there is only one command per
+       * end-effector (including the center of mass). The map is also useful for
+       * remembering commands received during the previous control ticks of the
+       * same run.
        */
       userFeedbackCommands.values().forEach(inputs::addCommand);
       return inputs;
