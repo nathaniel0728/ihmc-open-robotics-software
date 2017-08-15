@@ -38,4 +38,25 @@ public class AtlasLeapOfFaithParameters extends LeapOfFaithParameters
    {
       return runningOnRealRobot ? 1.0 : 0.5;
    }
+   
+   /** {@inheritDoc} */
+   @Override
+   public boolean scaleFootWeight()
+   {
+      return false;
+   }
+   
+   /** {@inheritDoc} */
+   @Override
+   public boolean relaxPelvisControl()
+   {
+      return false;
+   }
+   
+   /** {@inheritDoc} */
+   @Override
+   public boolean usePelvisRotation()
+   {
+      return false;
+   }
 }

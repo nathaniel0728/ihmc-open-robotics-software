@@ -58,7 +58,7 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
    @Override
    public double getDesiredTouchdownVelocity()
    {
-      return modelScale * -0.3;
+      return -0.2; // FIXME modelScale * -0.3;
    }
 
    @Override

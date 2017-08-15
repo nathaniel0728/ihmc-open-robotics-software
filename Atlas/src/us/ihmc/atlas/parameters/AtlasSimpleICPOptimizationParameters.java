@@ -6,7 +6,7 @@ import us.ihmc.commonWalkingControlModules.instantaneousCapturePoint.icpOptimiza
 public class AtlasSimpleICPOptimizationParameters extends ICPOptimizationParameters
 {
    private final boolean runningOnRealRobot;
-   private final boolean useAngularMomentum = false;
+   private final boolean useAngularMomentum = true;
 
    public AtlasSimpleICPOptimizationParameters(boolean runningOnRealRobot)
    {
@@ -64,7 +64,7 @@ public class AtlasSimpleICPOptimizationParameters extends ICPOptimizationParamet
    @Override
    public double getFeedbackRegularizationWeight()
    {
-      return runningOnRealRobot ? 0.0001 : 0.00001;
+      return runningOnRealRobot ? 0.00001 : 0.00001;
    }
 
    /** {@inheritDoc} */
@@ -85,14 +85,14 @@ public class AtlasSimpleICPOptimizationParameters extends ICPOptimizationParamet
    @Override
    public double getDynamicRelaxationWeight()
    {
-      return runningOnRealRobot ? 500.0 : (useAngularMomentum ? 100000.0 : 1000.0);
+      return runningOnRealRobot ? 10000.0 : (useAngularMomentum ? 100000.0 : 1000.0);
    }
 
    /** {@inheritDoc} */
    @Override
    public double getDynamicRelaxationDoubleSupportWeightModifier()
    {
-      return runningOnRealRobot ? 1.0 : (useAngularMomentum ? 100.0 : 4.0);
+      return runningOnRealRobot ? (useAngularMomentum ? 50.0 : 1.0) : (useAngularMomentum ? 100.0 : 4.0);
    }
 
    /** {@inheritDoc} */
