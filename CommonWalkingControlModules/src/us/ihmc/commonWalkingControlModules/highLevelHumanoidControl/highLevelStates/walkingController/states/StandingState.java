@@ -96,8 +96,8 @@ public class StandingState extends WalkingState
 
       for (RobotSide robotSide : RobotSide.values)
       {
-         legConfigurationManager.setStraight(robotSide);
          legConfigurationManager.setFullyExtendLeg(robotSide, false);
+         legConfigurationManager.setStraight(robotSide);
       }
    }
 

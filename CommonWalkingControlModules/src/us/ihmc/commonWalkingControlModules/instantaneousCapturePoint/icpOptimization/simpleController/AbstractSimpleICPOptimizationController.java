@@ -506,6 +506,7 @@ public abstract class AbstractSimpleICPOptimizationController implements ICPOpti
          double recursionMultiplier = Math.exp(-omega0 * recursionTime);
          this.footstepMultiplier.set(recursionMultiplier);
 
+         yoPerfectCMP.getFrameTuple2d(perfectCMP);
          predictedEndOfStateICP.set(desiredICP);
          predictedEndOfStateICP.sub(perfectCMP);
          predictedEndOfStateICP.scale(Math.exp(omega0 * timeRemainingInState.getDoubleValue()));
@@ -525,6 +526,7 @@ public abstract class AbstractSimpleICPOptimizationController implements ICPOpti
       NoConvergenceException noConvergenceException = null;
       try
       {
+         yoPerfectCMP.getFrameTuple2d(perfectCMP);
          solver.compute(icpError, perfectCMP);
       }
       catch (NoConvergenceException e)
@@ -572,7 +574,7 @@ public abstract class AbstractSimpleICPOptimizationController implements ICPOpti
       feedbackCMPDelta.set(feedbackCoPDelta);
       feedbackCMPDelta.add(cmpCoPDifferenceSolution);
 
-      yoPerfectCMP.set(perfectCMP);
+      yoPerfectCMP.getFrameTuple2d(perfectCMP);
       feedbackCMP.set(perfectCMP);
       feedbackCMP.add(feedbackCMPDelta);
 

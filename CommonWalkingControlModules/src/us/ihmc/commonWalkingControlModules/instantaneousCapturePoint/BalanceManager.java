@@ -451,6 +451,8 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.setDesiredCapturePoint(desiredCapturePoint2d);
       linearMomentumRateOfChangeControlModule.setFinalDesiredCapturePoint(finalDesiredCapturePoint2d);
       linearMomentumRateOfChangeControlModule.setDesiredCapturePointVelocity(desiredCapturePointVelocity2d);
+      
+      CapturePointTools.computeDesiredCentroidalMomentumPivot(desiredCapturePoint2d, desiredCapturePointVelocity2d, omega0, perfectCMP);
       linearMomentumRateOfChangeControlModule.setPerfectCMP(perfectCMP);
       linearMomentumRateOfChangeControlModule.setSupportLeg(supportLeg);
       yoDesiredCMP.getFrameTuple2d(desiredCMP);

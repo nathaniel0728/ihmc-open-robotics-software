@@ -207,7 +207,10 @@ public class WalkingSingleSupportState extends SingleSupportState
       else
       {
          swingTime = walkingMessageHandler.getNextSwingTime();
-         footstepTiming.set(walkingMessageHandler.peekTiming(0));
+         if (walkingMessageHandler.peekTiming(0) != null)
+            footstepTiming.set(walkingMessageHandler.peekTiming(0));
+         else
+            footstepTiming.setTimings(defaultSwingTime, defaultTransferTime);
          nextFootstep = walkingMessageHandler.poll();
       }
 
