@@ -112,7 +112,7 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
    @Override
    public double getExitCoPForwardSafetyMarginOnToes()
    {
-      return 0.005; //FIXME
+      return 0.015; //FIXME
    }
 
    @Override
