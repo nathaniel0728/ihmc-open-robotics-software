@@ -10,6 +10,7 @@ import us.ihmc.atlas.AtlasJointMap;
 import us.ihmc.avatar.drcRobot.RobotTarget;
 import us.ihmc.commonWalkingControlModules.configurations.ICPAngularMomentumModifierParameters;
 import us.ihmc.commonWalkingControlModules.configurations.JointPrivilegedConfigurationParameters;
+import us.ihmc.commonWalkingControlModules.configurations.LeapOfFaithParameters;
 import us.ihmc.commonWalkingControlModules.configurations.LegConfigurationParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SteppingParameters;
 import us.ihmc.commonWalkingControlModules.configurations.SwingTrajectoryParameters;
@@ -77,6 +78,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    private final SwingTrajectoryParameters swingTrajectoryParameters;
    private final ICPOptimizationParameters icpOptimizationParameters;
    private final AtlasSteppingParameters steppingParameters;
+   private final LeapOfFaithParameters leapOfFaithParameters;
 
    public AtlasWalkingControllerParameters(RobotTarget target, AtlasJointMap jointMap, AtlasContactPointParameters contactPointParameters)
    {
@@ -98,7 +100,8 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       toeOffParameters = new AtlasToeOffParameters(jointMap);
       swingTrajectoryParameters = new AtlasSwingTrajectoryParameters(target, jointMap.getModelScale());
       steppingParameters = new AtlasSteppingParameters(jointMap);
-
+      leapOfFaithParameters = new AtlasLeapOfFaithParameters(runningOnRealRobot);
+      
       if (USE_SIMPLE_ICP_OPTIMIZATION)
          icpOptimizationParameters = new AtlasSimpleICPOptimizationParameters(runningOnRealRobot);
       else
@@ -920,7 +923,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public boolean controlHeightWithMomentum()
    {
-      return false; //FIXME
+      return true; //FIXME
    }
 
    /** {@inheritDoc} */
@@ -962,6 +965,13 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    public SteppingParameters getSteppingParameters()
    {
       return steppingParameters;
+   }
+   
+   /** {@inheritDoc} */
+   @Override
+   public LeapOfFaithParameters getLeapOfFaithParameters()
+   {
+      return leapOfFaithParameters;
    }
    
    @Override
