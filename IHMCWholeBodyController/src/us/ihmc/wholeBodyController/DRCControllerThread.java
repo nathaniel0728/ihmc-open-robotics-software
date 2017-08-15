@@ -154,6 +154,7 @@ public class DRCControllerThread implements MultiThreadedRobotControlElement
       firstTick.set(true);
       registry.addChild(robotController.getYoVariableRegistry());
       registry.addChild(outputWriter.getControllerYoVariableRegistry());
+      registry.addChild(robotModel.getWalkingControllerParameters().getRegistry());
 
       lastEstimatorStartTime.set(Long.MIN_VALUE);
       expectedEstimatorTick.set(estimatorDTInNS);

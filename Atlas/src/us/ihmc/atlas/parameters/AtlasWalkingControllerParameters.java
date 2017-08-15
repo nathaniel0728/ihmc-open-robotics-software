@@ -69,13 +69,13 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    private final ICPAngularMomentumModifierParameters angularMomentumModifierParameters;
    private final double massScale;
 
-   private Map<String, YoPIDGains> jointspaceGains = null;
-   private Map<String, YoOrientationPIDGainsInterface> taskspaceAngularGains = null;
-   private Map<String, YoPositionPIDGainsInterface> taskspaceLinearGains = null;
-   private TObjectDoubleHashMap<String> jointHomeConfiguration = null;
-   private Map<String, Pose3D> bodyHomeConfiguration = null;
-   private ArrayList<String> positionControlledJoints = null;
-   private Map<String, JointAccelerationIntegrationSettings> integrationSettings = null;
+   private final Map<String, YoPIDGains> jointspaceGains;
+   private final Map<String, YoOrientationPIDGainsInterface> taskspaceAngularGains;
+   private final Map<String, YoPositionPIDGainsInterface> taskspaceLinearGains;
+   private final TObjectDoubleHashMap<String> jointHomeConfiguration;
+   private final Map<String, Pose3D> bodyHomeConfiguration;
+   private final ArrayList<String> positionControlledJoints;
+   private final Map<String, JointAccelerationIntegrationSettings> integrationSettings;
 
    private final JointPrivilegedConfigurationParameters jointPrivilegedConfigurationParameters;
    private final LegConfigurationParameters legConfigurationParameters;
@@ -123,6 +123,107 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
          transform.setRotation(rotation);
 
          handPosesWithRespectToChestFrame.put(robotSide, transform);
+      }
+      
+      jointspaceGains = new HashMap<>();
+      YoPIDGains spineGains = createSpineControlGains(registry);
+      for (SpineJointName name : jointMap.getSpineJointNames())
+         jointspaceGains.put(jointMap.getSpineJointName(name), spineGains);
+      YoPIDGains headGains = createHeadJointspaceControlGains(registry);
+      for (NeckJointName name : jointMap.getNeckJointNames())
+         jointspaceGains.put(jointMap.getNeckJointName(name), headGains);
+      YoPIDGains armGains = createArmControlGains(registry);
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         for (ArmJointName name : jointMap.getArmJointNames())
+            jointspaceGains.put(jointMap.getArmJointName(robotSide, name), armGains);
+      }
+      
+      taskspaceAngularGains = new HashMap<>();
+      YoOrientationPIDGainsInterface chestAngularGains = createChestControlGains(registry);
+      taskspaceAngularGains.put(jointMap.getChestName(), chestAngularGains);
+      YoOrientationPIDGainsInterface headAngularGains = createHeadOrientationControlGains(registry);
+      taskspaceAngularGains.put(jointMap.getHeadName(), headAngularGains);
+      YoOrientationPIDGainsInterface handAngularGains = createHandOrientationControlGains(registry);
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         taskspaceAngularGains.put(jointMap.getHandName(robotSide), handAngularGains);
+      }
+      
+      taskspaceLinearGains = new HashMap<>();
+      YoPositionPIDGainsInterface handLinearGains = createHandPositionControlGains(registry);
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         taskspaceLinearGains.put(jointMap.getHandName(robotSide), handLinearGains);
+      }
+      
+      jointHomeConfiguration = new TObjectDoubleHashMap<String>();
+      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_PITCH), 0.0);
+      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_ROLL), 0.0);
+      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_YAW), 0.0);
+      jointHomeConfiguration.put(jointMap.getNeckJointName(NeckJointName.PROXIMAL_NECK_PITCH), 0.0);
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_YAW), robotSide.negateIfRightSide(0.785398));
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_ROLL), robotSide.negateIfRightSide(-0.1));
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_PITCH), 3.00);
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_ROLL), robotSide.negateIfRightSide(1.8));
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.FIRST_WRIST_PITCH), -0.30);
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.WRIST_ROLL), robotSide.negateIfRightSide(0.70));
+         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SECOND_WRIST_PITCH), 0.15);
+      }
+      
+      bodyHomeConfiguration = new HashMap<String, Pose3D>();
+      Pose3D homeChestPoseInPelvisZUpFrame = new Pose3D();
+      bodyHomeConfiguration.put(jointMap.getChestName(), homeChestPoseInPelvisZUpFrame);
+      
+      positionControlledJoints = new ArrayList<String>();
+      if (runningOnRealRobot)
+      {
+         for (NeckJointName name : jointMap.getNeckJointNames())
+            positionControlledJoints.add(jointMap.getNeckJointName(name));
+
+         for (RobotSide robotSide : RobotSide.values)
+         {
+            for (ArmJointName name : jointMap.getArmJointNames())
+               positionControlledJoints.add(jointMap.getArmJointName(robotSide, name));
+         }
+      }
+      
+      integrationSettings = new HashMap<String, JointAccelerationIntegrationSettings>();
+      JointAccelerationIntegrationSettings neckJointSettings = new JointAccelerationIntegrationSettings();
+      neckJointSettings.setAlphaPosition(0.9996);
+      neckJointSettings.setAlphaVelocity(0.95);
+      neckJointSettings.setMaxPositionError(0.2);
+      neckJointSettings.setMaxVelocity(2.0);
+      for (NeckJointName name : jointMap.getNeckJointNames())
+      {
+         integrationSettings.put(jointMap.getNeckJointName(name), neckJointSettings);
+      }
+      JointAccelerationIntegrationSettings shoulderJointSettings = new JointAccelerationIntegrationSettings();
+      shoulderJointSettings.setAlphaPosition(0.9998);
+      shoulderJointSettings.setAlphaVelocity(0.95);
+      shoulderJointSettings.setMaxPositionError(0.2);
+      shoulderJointSettings.setMaxVelocity(2.0);
+      JointAccelerationIntegrationSettings elbowJointSettings = new JointAccelerationIntegrationSettings();
+      elbowJointSettings.setAlphaPosition(0.9996);
+      elbowJointSettings.setAlphaVelocity(0.95);
+      elbowJointSettings.setMaxPositionError(0.2);
+      elbowJointSettings.setMaxVelocity(2.0);
+      JointAccelerationIntegrationSettings wristJointSettings = new JointAccelerationIntegrationSettings();
+      wristJointSettings.setAlphaPosition(0.9999);
+      wristJointSettings.setAlphaVelocity(0.95);
+      wristJointSettings.setMaxPositionError(0.2);
+      wristJointSettings.setMaxVelocity(2.0);
+      for (RobotSide robotSide : RobotSide.values)
+      {
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_YAW), shoulderJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_ROLL), shoulderJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_PITCH), elbowJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_ROLL), elbowJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.FIRST_WRIST_PITCH), wristJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.WRIST_ROLL), wristJointSettings);
+         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SECOND_WRIST_PITCH), wristJointSettings);
       }
    }
 
@@ -423,9 +524,9 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    {
       YoFootOrientationGains gains = new YoFootOrientationGains("PelvisOrientation", registry);
 
-      double kpXY = 80.0;
+      double kpXY = 40.0;
       double kpZ = 40.0;
-      double zeta = runningOnRealRobot ? 0.5 : 0.8;
+      double zeta = runningOnRealRobot ? 0.2 : 0.8;
       double maxAccel = runningOnRealRobot ? 12.0 : 36.0;
       double maxJerk = runningOnRealRobot ? 180.0 : 540.0;
 
@@ -500,11 +601,11 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
 
       double kpXY = 40.0;
       double kpZ = 40.0;
-      double zetaXY = runningOnRealRobot ? 0.5 : 0.8;
-      double zetaZ = runningOnRealRobot ? 0.22 : 0.8;
+      double zetaXY = runningOnRealRobot ? 0.2 : 0.8;
+      double zetaZ = runningOnRealRobot ? 0.2 : 0.8;
       double maxAccel = runningOnRealRobot ? 6.0 : 36.0;
       double maxJerk = runningOnRealRobot ? 60.0 : 540.0;
-      double maxProportionalError = 10.0 * Math.PI/180.0;
+      double maxProportionalError = Math.toRadians(10.0);
 
       gains.setProportionalGains(kpXY, kpZ);
       gains.setDampingRatios(zetaXY, zetaZ);
@@ -609,26 +710,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public Map<String, YoPIDGains> getOrCreateJointSpaceControlGains(YoVariableRegistry registry)
    {
-      if (jointspaceGains != null)
-         return jointspaceGains;
-
-      jointspaceGains = new HashMap<>();
-
-      YoPIDGains spineGains = createSpineControlGains(registry);
-      for (SpineJointName name : jointMap.getSpineJointNames())
-         jointspaceGains.put(jointMap.getSpineJointName(name), spineGains);
-
-      YoPIDGains headGains = createHeadJointspaceControlGains(registry);
-      for (NeckJointName name : jointMap.getNeckJointNames())
-         jointspaceGains.put(jointMap.getNeckJointName(name), headGains);
-
-      YoPIDGains armGains = createArmControlGains(registry);
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         for (ArmJointName name : jointMap.getArmJointNames())
-            jointspaceGains.put(jointMap.getArmJointName(robotSide, name), armGains);
-      }
-
       return jointspaceGains;
    }
 
@@ -636,21 +717,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public Map<String, YoOrientationPIDGainsInterface> getOrCreateTaskspaceOrientationControlGains(YoVariableRegistry registry)
    {
-      if (taskspaceAngularGains != null)
-         return taskspaceAngularGains;
-
-      taskspaceAngularGains = new HashMap<>();
-
-      YoOrientationPIDGainsInterface chestAngularGains = createChestControlGains(registry);
-      taskspaceAngularGains.put(jointMap.getChestName(), chestAngularGains);
-
-      YoOrientationPIDGainsInterface headAngularGains = createHeadOrientationControlGains(registry);
-      taskspaceAngularGains.put(jointMap.getHeadName(), headAngularGains);
-
-      YoOrientationPIDGainsInterface handAngularGains = createHandOrientationControlGains(registry);
-      for (RobotSide robotSide : RobotSide.values)
-         taskspaceAngularGains.put(jointMap.getHandName(robotSide), handAngularGains);
-
       return taskspaceAngularGains;
    }
 
@@ -658,15 +724,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public Map<String, YoPositionPIDGainsInterface> getOrCreateTaskspacePositionControlGains(YoVariableRegistry registry)
    {
-      if (taskspaceLinearGains != null)
-         return taskspaceLinearGains;
-
-      taskspaceLinearGains = new HashMap<>();
-
-      YoPositionPIDGainsInterface handLinearGains = createHandPositionControlGains(registry);
-      for (RobotSide robotSide : RobotSide.values)
-         taskspaceLinearGains.put(jointMap.getHandName(robotSide), handLinearGains);
-
       return taskspaceLinearGains;
    }
 
@@ -688,28 +745,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public TObjectDoubleHashMap<String> getOrCreateJointHomeConfiguration()
    {
-      if (jointHomeConfiguration != null)
-         return jointHomeConfiguration;
-
-      jointHomeConfiguration = new TObjectDoubleHashMap<String>();
-
-      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_PITCH), 0.0);
-      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_ROLL), 0.0);
-      jointHomeConfiguration.put(jointMap.getSpineJointName(SpineJointName.SPINE_YAW), 0.0);
-
-      jointHomeConfiguration.put(jointMap.getNeckJointName(NeckJointName.PROXIMAL_NECK_PITCH), 0.0);
-
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_YAW), robotSide.negateIfRightSide(0.785398));
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_ROLL), robotSide.negateIfRightSide(-0.1));
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_PITCH), 3.00);
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_ROLL), robotSide.negateIfRightSide(1.8));
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.FIRST_WRIST_PITCH), -0.30);
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.WRIST_ROLL), robotSide.negateIfRightSide(0.70));
-         jointHomeConfiguration.put(jointMap.getArmJointName(robotSide, ArmJointName.SECOND_WRIST_PITCH), 0.15);
-      }
-
       return jointHomeConfiguration;
    }
 
@@ -717,14 +752,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public Map<String, Pose3D> getOrCreateBodyHomeConfiguration()
    {
-      if (bodyHomeConfiguration != null)
-         return bodyHomeConfiguration;
-
-      bodyHomeConfiguration = new HashMap<String, Pose3D>();
-
-      Pose3D homeChestPoseInPelvisZUpFrame = new Pose3D();
-      bodyHomeConfiguration.put(jointMap.getChestName(), homeChestPoseInPelvisZUpFrame);
-
       return bodyHomeConfiguration;
    }
 
@@ -732,23 +759,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public List<String> getOrCreatePositionControlledJoints()
    {
-      if (positionControlledJoints != null)
-         return positionControlledJoints;
-
-      positionControlledJoints = new ArrayList<String>();
-
-      if (runningOnRealRobot)
-      {
-         for (NeckJointName name : jointMap.getNeckJointNames())
-            positionControlledJoints.add(jointMap.getNeckJointName(name));
-
-         for (RobotSide robotSide : RobotSide.values)
-         {
-            for (ArmJointName name : jointMap.getArmJointNames())
-               positionControlledJoints.add(jointMap.getArmJointName(robotSide, name));
-         }
-      }
-
       return positionControlledJoints;
    }
 
@@ -756,49 +766,6 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public Map<String, JointAccelerationIntegrationSettings> getOrCreateIntegrationSettings()
    {
-      if (integrationSettings != null)
-         return integrationSettings;
-
-      integrationSettings = new HashMap<String, JointAccelerationIntegrationSettings>();
-
-      JointAccelerationIntegrationSettings neckJointSettings = new JointAccelerationIntegrationSettings();
-      neckJointSettings.setAlphaPosition(0.9996);
-      neckJointSettings.setAlphaVelocity(0.95);
-      neckJointSettings.setMaxPositionError(0.2);
-      neckJointSettings.setMaxVelocity(2.0);
-
-      for (NeckJointName name : jointMap.getNeckJointNames())
-         integrationSettings.put(jointMap.getNeckJointName(name), neckJointSettings);
-
-      JointAccelerationIntegrationSettings shoulderJointSettings = new JointAccelerationIntegrationSettings();
-      shoulderJointSettings.setAlphaPosition(0.9998);
-      shoulderJointSettings.setAlphaVelocity(0.95);
-      shoulderJointSettings.setMaxPositionError(0.2);
-      shoulderJointSettings.setMaxVelocity(2.0);
-
-      JointAccelerationIntegrationSettings elbowJointSettings = new JointAccelerationIntegrationSettings();
-      elbowJointSettings.setAlphaPosition(0.9996);
-      elbowJointSettings.setAlphaVelocity(0.95);
-      elbowJointSettings.setMaxPositionError(0.2);
-      elbowJointSettings.setMaxVelocity(2.0);
-
-      JointAccelerationIntegrationSettings wristJointSettings = new JointAccelerationIntegrationSettings();
-      wristJointSettings.setAlphaPosition(0.9999);
-      wristJointSettings.setAlphaVelocity(0.95);
-      wristJointSettings.setMaxPositionError(0.2);
-      wristJointSettings.setMaxVelocity(2.0);
-
-      for (RobotSide robotSide : RobotSide.values)
-      {
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_YAW), shoulderJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SHOULDER_ROLL), shoulderJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_PITCH), elbowJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.ELBOW_ROLL), elbowJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.FIRST_WRIST_PITCH), wristJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.WRIST_ROLL), wristJointSettings);
-         integrationSettings.put(jointMap.getArmJointName(robotSide, ArmJointName.SECOND_WRIST_PITCH), wristJointSettings);
-      }
-
       return integrationSettings;
    }
 
