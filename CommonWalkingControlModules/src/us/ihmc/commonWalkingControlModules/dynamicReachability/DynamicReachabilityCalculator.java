@@ -42,11 +42,11 @@ public class DynamicReachabilityCalculator
    //// TODO: 3/21/17 add in the ability to drop the pelvis for reachability
 
    private static final boolean USE_CONSERVATIVE_REQUIRED_ADJUSTMENT = true;
-   private static final boolean VISUALIZE = false;
-   private static final boolean VISUALIZE_REACHABILITY = false;
+   private static final boolean VISUALIZE = true;
+   private static final boolean VISUALIZE_REACHABILITY = true;
 
    private static final double epsilon = 0.005;
-   private static final double stanceLegLengthToeOffFactor = 1.1;
+   private static final double stanceLegLengthToeOffFactor = 1.02;
 
    private static final double gradientThresholdForConsideration = 0.005;
 
