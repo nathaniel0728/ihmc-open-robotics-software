@@ -49,7 +49,7 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public double getAnkleLowerLimitToTriggerToeOff()
    {
-      return -0.75; //FIXME -1.0;
+      return -0.40; //FIXME -1.0;
    }
 
 
@@ -70,7 +70,7 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public boolean checkCoPLocationToTriggerToeOff()
    {
-      return true; //FIXME
+      return false; //FIXME
    }
 
    @Override
