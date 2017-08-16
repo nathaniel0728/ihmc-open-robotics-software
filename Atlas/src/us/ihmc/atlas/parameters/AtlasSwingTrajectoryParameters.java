@@ -42,6 +42,12 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
    {
       return Math.toRadians(-20.0);
    }
+   
+   @Override
+   public double getHeelTouchdownLengthRatio()
+   {
+      return runningOnRealRobot ? 0.2 : 0.5;
+   }
 
    @Override
    public double getMinMechanicalLegLength()

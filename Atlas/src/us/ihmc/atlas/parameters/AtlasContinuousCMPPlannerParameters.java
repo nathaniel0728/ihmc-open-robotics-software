@@ -39,7 +39,7 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
          return copOffsets;
 
       Vector2D entryOffset = new Vector2D(0.0, -0.005);
-      Vector2D exitOffset = new Vector2D(0.0, 0.015); //FIXME 0.025);
+      Vector2D exitOffset = new Vector2D(0.0, 0.025);
 
       entryOffset.scale(scale);
       exitOffset.scale(scale);
@@ -112,7 +112,7 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
    @Override
    public double getExitCoPForwardSafetyMarginOnToes()
    {
-      return 0.015; //FIXME
+      return 0.03; //FIXME
    }
 
    @Override
