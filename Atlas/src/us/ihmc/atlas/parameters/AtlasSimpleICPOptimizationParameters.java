@@ -211,7 +211,7 @@ public class AtlasSimpleICPOptimizationParameters extends ICPOptimizationParamet
    @Override
    public double getLateralReachabilityOuterLimit()
    {
-      return 0.85;
+      return 0.5;
    }
 
    /** {@inheritDoc} */
@@ -225,14 +225,14 @@ public class AtlasSimpleICPOptimizationParameters extends ICPOptimizationParamet
    @Override
    public double getForwardReachabilityLimit()
    {
-      return 0.9;
+      return 0.65;
    }
 
    /** {@inheritDoc} */
    @Override
    public double getBackwardReachabilityLimit()
    {
-      return -0.5;
+      return -0.3;
    }
 
    /** {@inheritDoc} */
