@@ -74,6 +74,14 @@ public class ToeOffManager
    private final YoBoolean isDesiredECMPOKForToeOff = new YoBoolean("isDesiredECMPOKForToeOff", registry);
    private final YoBoolean isDesiredCoPOKForToeOff = new YoBoolean("isDesiredCoPOKForToeOff", registry);
    
+   private final YoBoolean isFrontFootWellPositionedForToeOff = new YoBoolean("isFrontFootWellPositionedForToeOff", registry);
+   private final YoBoolean isStepLongEnough = new YoBoolean("isStepLongEnough", registry);
+   private final YoBoolean isForwardStepping = new YoBoolean("isForwardStepping", registry);
+   private final YoBoolean isSideStepping = new YoBoolean("isSideStepping", registry);
+   private final YoBoolean isNextStepHighEnough = new YoBoolean("isNextStepHighEnough", registry);
+   private final YoBoolean isNextStepLowEnough = new YoBoolean("isNextStepLowEnough", registry);
+   private final YoBoolean isNextStepTooLow = new YoBoolean("isNextStepTooLow", registry);
+   
    private final YoBoolean needToSwitchToToeOffForJointLimit = new YoBoolean("needToSwitchToToeOffForJointLimit", registry);
    
    private final YoBoolean isRearAnklePitchHittingLimit = new YoBoolean("isRearAnklePitchHittingLimit", registry);
@@ -269,6 +277,7 @@ public class ToeOffManager
          isDesiredCoPOKForToeOff.set(false);
          isDesiredCoPOKForToeOffFilt.set(false);
 
+         isFrontFootWellPositionedForToeOff.set(false);
          computeToePointContact.set(false);
          computeToeLineContact.set(false);
          return;
@@ -351,6 +360,7 @@ public class ToeOffManager
          isDesiredCoPOKForToeOffFilt.set(false);
 
          needToSwitchToToeOffForJointLimit.set(false);
+         isFrontFootWellPositionedForToeOff.set(false);;
          computeToePointContact.set(false);
          computeToeLineContact.set(false);
          return;
@@ -549,33 +559,39 @@ public class ToeOffManager
       double stepHeight = tempLeadingFootPositionInWorld.getZ() - tempTrailingFootPositionInWorld.getZ();
 
       boolean isNextStepHighEnough = stepHeight > minStepHeightForToeOff.getDoubleValue();
+      this.isNextStepHighEnough.set(isNextStepHighEnough);
       if (isNextStepHighEnough)
          return true;
 
-      boolean isForwardStepping = tempLeadingFootPositionInWorld.getX() > forwardSteppingThreshold;
+      boolean isForwardStepping = tempLeadingFootPosition.getX() > forwardSteppingThreshold;
+      this.isForwardStepping.set(isForwardStepping);
       if (!isForwardStepping)
          return false;
 
       if (ENABLE_TOE_OFF_FOR_STEP_DOWN)
       {
          boolean isNextStepLowEnough = stepHeight < -minStepHeightForToeOff.getDoubleValue();
+         this.isNextStepLowEnough.set(isNextStepLowEnough);
          if (isNextStepLowEnough)
             return true;
       }
       else
       {
          boolean isNextStepTooLow = stepHeight < stepDownTooFarForToeOff;
+         this.isNextStepTooLow.set(isNextStepTooLow);
          if (isNextStepTooLow)
             return false;
       }
 
       boolean isSideStepping = Math.abs(Math.atan2(tempLeadingFootPosition.getY(), tempLeadingFootPosition.getX())) > Math.toRadians(minimumAngleForSideStepping);
+      this.isSideStepping.set(isSideStepping);
       if (isSideStepping && !DO_TOE_OFF_FOR_SIDE_STEPS)
          return false;
 
       boolean isStepLongEnough = tempLeadingFootPosition.distance(tempTrailingFootPosition) > minStepLengthForToeOff.getDoubleValue();
       boolean isStepLongEnoughAlongX = tempLeadingFootPosition.getX() > footLength;
-      return isStepLongEnough && isStepLongEnoughAlongX;
+      this.isStepLongEnough.set(isStepLongEnough && isStepLongEnoughAlongX);
+      return this.isStepLongEnough.getBooleanValue();
    }
 
    /**
@@ -719,7 +735,8 @@ public class ToeOffManager
       @Override
       public void isReadyToSwitchToToeOff(RobotSide trailingLeg, ReferenceFrame frontFootFrame)
       {
-         if (!isFrontFootWellPositionedForToeOff(trailingLeg, frontFootFrame))
+         isFrontFootWellPositionedForToeOff.set(isFrontFootWellPositionedForToeOff(trailingLeg, frontFootFrame));
+         if (!isFrontFootWellPositionedForToeOff.getBooleanValue())
          {
             doLineToeOff.set(false);
             computeToeLineContact.set(true);
@@ -790,7 +807,8 @@ public class ToeOffManager
       @Override
       public void isReadyToSwitchToToeOff(RobotSide trailingLeg, ReferenceFrame frontFootFrame)
       {
-         if (!isFrontFootWellPositionedForToeOff(trailingLeg, frontFootFrame))
+         isFrontFootWellPositionedForToeOff.set(isFrontFootWellPositionedForToeOff(trailingLeg, frontFootFrame));
+         if (!isFrontFootWellPositionedForToeOff.getBooleanValue())
          {
             doPointToeOff.set(false);
             computeToePointContact.set(true);
