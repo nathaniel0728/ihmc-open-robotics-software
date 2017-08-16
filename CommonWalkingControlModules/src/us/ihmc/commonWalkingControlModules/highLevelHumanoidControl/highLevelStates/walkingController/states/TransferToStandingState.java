@@ -113,7 +113,6 @@ public class TransferToStandingState extends WalkingState
             legConfigurationManager.setFullyExtendLeg(robotSide, false);
             legConfigurationManager.setStraight(robotSide);
          }
-         
       }
    }
 

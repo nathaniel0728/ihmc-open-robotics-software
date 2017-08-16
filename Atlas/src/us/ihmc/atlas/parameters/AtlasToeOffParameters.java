@@ -44,12 +44,26 @@ public class AtlasToeOffParameters extends ToeOffParameters
    {
       return true;
    }
+   
+   /** {@inheritDoc} */
+   @Override
+   public boolean doToeOffWhenHittingKneeLimit()
+   {
+      return true;
+   }
 
    /** {@inheritDoc} */
    @Override
    public double getAnkleLowerLimitToTriggerToeOff()
    {
       return -0.40; //FIXME -1.0;
+   }
+   
+   /** {@inheritDoc} */
+   @Override
+   public double getKneeUpperLimitToTriggerToeOff()
+   {
+      return 0.6;
    }
 
 
