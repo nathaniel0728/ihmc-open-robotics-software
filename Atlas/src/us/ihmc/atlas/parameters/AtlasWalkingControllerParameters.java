@@ -101,7 +101,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
       swingTrajectoryParameters = new AtlasSwingTrajectoryParameters(target, jointMap.getModelScale());
       steppingParameters = new AtlasSteppingParameters(jointMap);
       leapOfFaithParameters = new AtlasLeapOfFaithParameters(runningOnRealRobot);
-      
+
       if (USE_SIMPLE_ICP_OPTIMIZATION)
          icpOptimizationParameters = new AtlasSimpleICPOptimizationParameters(runningOnRealRobot);
       else
@@ -966,14 +966,14 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    {
       return steppingParameters;
    }
-   
+
    /** {@inheritDoc} */
    @Override
    public LeapOfFaithParameters getLeapOfFaithParameters()
    {
       return leapOfFaithParameters;
    }
-   
+
    @Override
    public boolean alwaysAllowMomentum()
    {

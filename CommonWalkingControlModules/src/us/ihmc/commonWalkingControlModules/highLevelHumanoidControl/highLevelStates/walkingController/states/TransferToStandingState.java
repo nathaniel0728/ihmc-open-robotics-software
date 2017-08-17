@@ -15,6 +15,8 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.robotics.robotSide.RobotSide;
 
+import java.awt.*;
+
 public class TransferToStandingState extends WalkingState
 {
    private final YoDouble maxICPErrorToSwitchToStanding = new YoDouble("maxICPErrorToSwitchToStanding", registry);
@@ -45,7 +47,7 @@ public class TransferToStandingState extends WalkingState
       balanceManager = managerFactory.getOrCreateBalanceManager();
       pelvisOrientationManager = managerFactory.getOrCreatePelvisOrientationManager();
       feetManager = managerFactory.getOrCreateFeetManager();
-      legConfigurationManager = managerFactory.getOrCreateKneeAngleManager();
+      legConfigurationManager = managerFactory.getOrCreateLegConfigurationManager();
 
       doFootExplorationInTransferToStanding.set(false);
    }
@@ -99,7 +101,7 @@ public class TransferToStandingState extends WalkingState
       pelvisOrientationManager.centerInMidFeetZUpFrame(finalTransferTime);
       balanceManager.setICPPlanTransferFromSide(previousSupportSide);
       balanceManager.initializeICPPlanForStanding(finalTransferTime);
-      
+
       if (previousSupportSide != null)
       {
          RobotSide previousSwingSide = previousSupportSide.getOppositeSide();

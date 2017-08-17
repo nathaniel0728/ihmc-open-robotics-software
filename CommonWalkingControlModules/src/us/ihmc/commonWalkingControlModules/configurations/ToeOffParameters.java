@@ -103,14 +103,6 @@ public abstract class ToeOffParameters
    public abstract boolean doToeOffWhenHittingAnkleLimit();
    
    /**
-    * To enable that feature, {@link ToeOffParameters#doToeOffIfPossible()} return true is required.
-    */
-   public boolean doToeOffWhenHittingKneeLimit()
-   {
-      return false;
-   }
-
-   /**
     * Ankle limit that triggers {@link ToeOffParameters#doToeOffWhenHittingAnkleLimit()}.
     * The minimum limit is taken between the returned value and the joint limit.
     */
@@ -120,12 +112,20 @@ public abstract class ToeOffParameters
    }
    
    /**
+    * To enable that feature, {@link ToeOffParameters#doToeOffIfPossible()} return true is required.
+    */
+   public boolean doToeOffWhenHittingKneeLimit()
+   {
+      return false;
+   }
+
+   /**
     * Knee limit that triggers {@link ToeOffParameters#doToeOffWhenHittingKneeLimit()}.
     * The maximum limit is taken between the returned value and the joint limit.
     */
    public double getKneeUpperLimitToTriggerToeOff()
    {
-      return 0.6;
+      return 1.2;
    }
 
    /**
