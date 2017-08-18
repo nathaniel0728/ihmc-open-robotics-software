@@ -87,6 +87,13 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
    {
       return scale * 0.02;
    }
+   
+   @Override
+   /** {@inheritDoc} */
+   public double getExitCoPForwardSafetyMarginOnToes()
+   {
+      return scale * 0.02;
+   }
 
    /** {@inheritDoc} */
    @Override
@@ -107,12 +114,6 @@ public class AtlasContinuousCMPPlannerParameters extends ContinuousCMPICPPlanner
    public double getVelocityDecayDurationWhenDone()
    {
       return 0.5;
-   }
-
-   @Override
-   public double getExitCoPForwardSafetyMarginOnToes()
-   {
-      return 0.03; //FIXME
    }
 
    @Override

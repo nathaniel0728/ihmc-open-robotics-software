@@ -76,7 +76,7 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
          return modelScale * -2.0;
 
       default :
-         return modelScale * -1.0;
+         return modelScale * -0.5; // FIXME
       }
    }
 

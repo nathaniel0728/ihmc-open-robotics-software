@@ -35,7 +35,7 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
    public LegConfigurationGains getStraightLegGains()
    {
       LegConfigurationGains gains = new LegConfigurationGains();
-      gains.setJointSpaceKp(runningOnRealRobot ? 10.0 : 40.0);
+      gains.setJointSpaceKp(runningOnRealRobot ? 8.0 : 40.0);
       gains.setJointSpaceKd(runningOnRealRobot ? 3.0 : 6.0);
 
       return gains;
@@ -45,7 +45,7 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
    /** {@inheritDoc} */
    public double getLegPrivilegedHighWeight()
    {
-      return runningOnRealRobot ? 50.0 : 150.0;
+      return runningOnRealRobot ? 75.0 : 150.0;
    }
 
    @Override
@@ -59,7 +59,7 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
    /** {@inheritDoc} */
    public double getKneeAngleWhenExtended()
    {
-      return runningOnRealRobot ? 0.2 : 0.0;
+      return runningOnRealRobot ? 0.15 : 0.0;
    }
 
    @Override
@@ -67,5 +67,10 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
    public double getKneeAngleWhenStraight()
    {
       return runningOnRealRobot ? 0.35 : 0.25;
+   }
+   
+   public double getSpeedForSupportKneeStraightening()
+   {
+      return runningOnRealRobot ? 0.5 : 1.0;
    }
 }

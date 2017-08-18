@@ -135,7 +135,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    public double getOmega0()
    {
       // TODO probably need to be tuned.
-      return (runningOnRealRobot ? 3.4 : 3.0) / Math.sqrt(jointMap.getModelScale()); // 3.0 seems more appropriate.
+      return (runningOnRealRobot ? 3.0 : 3.0) / Math.sqrt(jointMap.getModelScale()); // 3.0 seems more appropriate.
 //      return 3.0;
    }
 
