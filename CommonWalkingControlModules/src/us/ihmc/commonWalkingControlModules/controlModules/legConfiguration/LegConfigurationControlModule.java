@@ -72,6 +72,7 @@ public class LegConfigurationControlModule
    private final YoBoolean bentUseActuatorSpaceVelocityControl;
 
    private final YoDouble kneePitchPrivilegedConfiguration;
+   private final YoDouble kneePitchPrivilegedVelocity;
    private final YoDouble kneePitchPrivilegedError;
 
    private final YoDouble kneePrivilegedPAction;
@@ -96,6 +97,7 @@ public class LegConfigurationControlModule
 
    private final YoDouble desiredVirtualActuatorLength;
    private final YoDouble currentVirtualActuatorLength;
+   private final YoDouble desiredVirtualActuatorVelocity;
    private final YoDouble currentVirtualActuatorVelocity;
 
    private final OneDoFJoint kneePitchJoint;
@@ -178,6 +180,7 @@ public class LegConfigurationControlModule
       bentUseActuatorSpaceVelocityControl = new YoBoolean(sidePrefix + "BentUseActuatorSpaceVelocityControl", registry);
 
       kneePitchPrivilegedConfiguration = new YoDouble(sidePrefix + "KneePitchPrivilegedConfiguration", registry);
+      kneePitchPrivilegedVelocity = new YoDouble(sidePrefix + "KneePitchPrivilegedVelocity", registry);
       privilegedMaxAcceleration = new YoDouble(sidePrefix + "LegPrivilegedMaxAcceleration", registry);
 
       kneePitchPrivilegedError = new YoDouble(sidePrefix + "KneePitchPrivilegedError", registry);
@@ -242,6 +245,7 @@ public class LegConfigurationControlModule
 
       desiredVirtualActuatorLength = new YoDouble(namePrefix + "DesiredVirtualActuatorLength", registry);
       currentVirtualActuatorLength = new YoDouble(namePrefix + "CurrentVirtualActuatorLength", registry);
+      desiredVirtualActuatorVelocity = new YoDouble(namePrefix + "DesiredVirtualActuatorVelocity", registry);
       currentVirtualActuatorVelocity = new YoDouble(namePrefix + "CurrentVirtualActuatorVelocity", registry);
 
       // set up states and state machine
@@ -383,8 +387,14 @@ public class LegConfigurationControlModule
       double virtualError = desiredVirtualLength - currentVirtualLength;
       kneePitchPrivilegedError.set(error);
 
+      double desiredVirtualVelocity = computeVirtualActuatorVelocity(currentPosition, kneePitchPrivilegedVelocity.getDoubleValue());
       double currentVirtualVelocity = computeVirtualActuatorVelocity(currentPosition, kneePitchJoint.getQd());
+
+      desiredVirtualActuatorVelocity.set(desiredVirtualVelocity);
       currentVirtualActuatorVelocity.set(currentVirtualVelocity);
+
+      double velocityError = kneePitchPrivilegedVelocity.getDoubleValue() - kneePitchJoint.getQd();
+      double virtualVelocityError = desiredVirtualVelocity - currentVirtualVelocity;
 
       double percentDistanceToMidRange = MathTools.clamp(Math.abs(currentPosition - kneeMidRangeOfMotion) / (0.5 * kneeRangeOfMotion), 0.0, 1.0);
       double positionBlendingFactor = Math.min(maxPositionBlendingFactor * percentDistanceToMidRange, 1.0);
@@ -406,8 +416,8 @@ public class LegConfigurationControlModule
          dampingActionScaleFactor = 1.0;
       this.dampingActionScaleFactor.set(dampingActionScaleFactor);
 
-      double jointSpaceDAction = dampingActionScaleFactor * jointSpaceVelocityGain * -kneePitchJoint.getQd();
-      double actuatorSpaceDAction = dampingActionScaleFactor * actuatorSpaceVelocityGain * currentVirtualVelocity;
+      double jointSpaceDAction = dampingActionScaleFactor * jointSpaceVelocityGain * velocityError;
+      double actuatorSpaceDAction = dampingActionScaleFactor * actuatorSpaceVelocityGain * -virtualVelocityError;
 
       double pAction, dAction;
 
@@ -509,6 +519,7 @@ public class LegConfigurationControlModule
          }
 
          kneePitchPrivilegedConfiguration.set(desiredPrivilegedPosition);
+         kneePitchPrivilegedVelocity.set(-yoStraighteningSpeed.getDoubleValue());
 
          jointSpaceConfigurationGain = straightJointSpacePositionGain.getDoubleValue();
          jointSpaceVelocityGain = straightJointSpaceVelocityGain.getDoubleValue();
@@ -580,6 +591,7 @@ public class LegConfigurationControlModule
       public void doAction()
       {
          kneePitchPrivilegedConfiguration.set(desiredAngle.getDoubleValue());
+         kneePitchPrivilegedVelocity.set(0.0);
 
          jointSpaceConfigurationGain = straightJointSpacePositionGain.getDoubleValue();
          jointSpaceVelocityGain = straightJointSpaceVelocityGain.getDoubleValue();
@@ -622,6 +634,7 @@ public class LegConfigurationControlModule
       public void doAction()
       {
          kneePitchPrivilegedConfiguration.set(kneeMidRangeOfMotion);
+         kneePitchPrivilegedVelocity.set(0.0);
 
          jointSpaceConfigurationGain = bentJointSpacePositionGain.getDoubleValue();
          jointSpaceVelocityGain = bentJointSpaceVelocityGain.getDoubleValue();
@@ -669,6 +682,16 @@ public class LegConfigurationControlModule
          double desiredKneePosition = InterpolationTools.linearInterpolate(desiredAngle.getDoubleValue(), collapsedAngle, alpha);
 
          kneePitchPrivilegedConfiguration.set(desiredKneePosition);
+
+         if (getTimeInCurrentState() < collapsingDuration.getDoubleValue())
+         {
+            double desiredKneeVelocity = (collapsedAngle - desiredAngle.getDoubleValue()) / collapsingDuration.getDoubleValue();
+            kneePitchPrivilegedVelocity.set(desiredKneeVelocity);
+         }
+         else
+         {
+            kneePitchPrivilegedVelocity.set(0.0);
+         }
 
          jointSpaceConfigurationGain = bentJointSpacePositionGain.getDoubleValue();
          jointSpaceVelocityGain = bentJointSpaceVelocityGain.getDoubleValue();
