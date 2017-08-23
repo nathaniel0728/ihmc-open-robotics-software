@@ -38,6 +38,9 @@ public class AtlasLegConfigurationParameters extends LegConfigurationParameters
       gains.setJointSpaceKp(runningOnRealRobot ? 10.0 : 40.0);
       gains.setJointSpaceKd(runningOnRealRobot ? 3.0 : 6.0);
 
+      gains.setUseActuatorSpacePositionControl(runningOnRealRobot);
+      gains.setActuatorSpaceKp(50.0);
+
       return gains;
    }
 
