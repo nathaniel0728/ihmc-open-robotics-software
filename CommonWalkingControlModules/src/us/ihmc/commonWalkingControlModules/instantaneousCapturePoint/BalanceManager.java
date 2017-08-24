@@ -801,7 +801,7 @@ public class BalanceManager
       linearMomentumRateOfChangeControlModule.minimizeAngularMomentumRateZ(enable);
    }
 
-   public YoICPControlGains getICPCOntrollerGains()
+   public YoICPControlGains getIcpControllerGains()
    {
       return icpControlGains;
    }
