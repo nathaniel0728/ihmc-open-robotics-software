@@ -46,7 +46,7 @@ public class AtlasSwingTrajectoryParameters extends SwingTrajectoryParameters
    @Override
    public double getHeelTouchdownLengthRatio()
    {
-      return runningOnRealRobot ? 0.2 : 0.5;
+      return runningOnRealRobot ? 0.5 : 0.5;
    }
 
    @Override

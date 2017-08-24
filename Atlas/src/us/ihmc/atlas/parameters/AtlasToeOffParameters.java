@@ -42,14 +42,14 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public boolean doToeOffWhenHittingAnkleLimit()
    {
-      return true;
+      return false;
    }
    
    /** {@inheritDoc} */
    @Override
    public boolean doToeOffWhenHittingKneeLimit()
    {
-      return true;
+      return false;
    }
 
    /** {@inheritDoc} */
@@ -102,6 +102,6 @@ public class AtlasToeOffParameters extends ToeOffParameters
    @Override
    public double getECMPProximityForToeOff()
    {
-      return 0.02; //FIXME
+      return 0.001; //FIXME
    }
 }
