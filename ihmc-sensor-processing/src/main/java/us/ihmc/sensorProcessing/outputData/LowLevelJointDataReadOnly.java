@@ -3,12 +3,14 @@ package us.ihmc.sensorProcessing.outputData;
 public interface LowLevelJointDataReadOnly
 {
    public abstract boolean hasControlMode();
+   boolean hasJointBehaviorHint();
    public abstract boolean hasDesiredTorque();
    public abstract boolean hasDesiredPosition();
    public abstract boolean hasDesiredVelocity();
    public abstract boolean hasDesiredAcceleration();
    public abstract boolean hasDesiredCurrent();
    public abstract LowLevelJointControlMode getControlMode();
+   JointBehaviorHint getJointBehaviorHint();
    public abstract double getDesiredTorque();
    public abstract double getDesiredPosition();
    public abstract double getDesiredVelocity();

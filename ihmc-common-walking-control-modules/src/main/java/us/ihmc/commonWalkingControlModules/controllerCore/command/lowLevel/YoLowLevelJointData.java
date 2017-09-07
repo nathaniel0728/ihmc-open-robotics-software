@@ -1,6 +1,7 @@
 package us.ihmc.commonWalkingControlModules.controllerCore.command.lowLevel;
 
 import us.ihmc.robotics.screwTheory.OneDoFJoint;
+import us.ihmc.sensorProcessing.outputData.JointBehaviorHint;
 import us.ihmc.sensorProcessing.outputData.LowLevelJointControlMode;
 import us.ihmc.sensorProcessing.outputData.LowLevelJointDataReadOnly;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
@@ -11,6 +12,7 @@ import us.ihmc.yoVariables.variable.YoEnum;
 public class YoLowLevelJointData implements LowLevelJointDataReadOnly
 {
    private final YoEnum<LowLevelJointControlMode> controlMode;
+   private final YoEnum<JointBehaviorHint> jointBehaviorHint;
    private final YoDouble desiredTorque;
    private final YoDouble desiredPosition;
    private final YoDouble desiredVelocity;
@@ -26,6 +28,7 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
       namePrefix += "LowLevel";
 
       controlMode = new YoEnum<>(namePrefix + "ControlMode" + suffixString, registry, LowLevelJointControlMode.class, true);
+      jointBehaviorHint = new YoEnum<>(namePrefix + "JointBehaviorHint" + suffixString, registry, JointBehaviorHint.class, true);
       desiredTorque = new YoDouble(namePrefix + "DesiredTorque" + suffixString, registry);
       desiredPosition = new YoDouble(namePrefix + "DesiredPosition" + suffixString, registry);
       desiredVelocity = new YoDouble(namePrefix + "DesiredVelocity" + suffixString, registry);
@@ -42,6 +45,7 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    public void clear()
    {
       controlMode.set(null);
+      jointBehaviorHint.set(null);
       desiredTorque.set(Double.NaN);
       desiredPosition.set(Double.NaN);
       desiredVelocity.set(Double.NaN);
@@ -55,6 +59,7 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    public void set(LowLevelJointDataReadOnly other)
    {
       controlMode.set(other.getControlMode());
+      jointBehaviorHint.set(other.getJointBehaviorHint());
       desiredTorque.set(other.getDesiredTorque());
       desiredPosition.set(other.getDesiredPosition());
       desiredVelocity.set(other.getDesiredVelocity());
@@ -73,6 +78,8 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    {
       if (!hasControlMode())
          controlMode.set(other.getControlMode());
+      if (!hasJointBehaviorHint())
+         jointBehaviorHint.set(other.getJointBehaviorHint());
       if (!hasDesiredTorque())
          desiredTorque.set(other.getDesiredTorque());
       if (!hasDesiredPosition())
@@ -105,6 +112,11 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    public void setControlMode(LowLevelJointControlMode controlMode)
    {
       this.controlMode.set(controlMode);
+   }
+   
+   public void setJointBehaviorHint(JointBehaviorHint jointBehaviorHint)
+   {
+      this.jointBehaviorHint.set(jointBehaviorHint);
    }
 
    public void setDesiredTorque(double tau)
@@ -144,6 +156,13 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    }
 
    @Override
+   public boolean hasJointBehaviorHint()
+   {
+      return jointBehaviorHint.getEnumValue() != null;
+   }
+   
+   
+   @Override
    public boolean hasDesiredTorque()
    {
       return !desiredTorque.isNaN();
@@ -177,6 +196,12 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    public LowLevelJointControlMode getControlMode()
    {
       return controlMode.getEnumValue();
+   }
+   
+   @Override
+   public JointBehaviorHint getJointBehaviorHint()
+   {
+      return jointBehaviorHint.getEnumValue();
    }
 
    @Override
@@ -268,4 +293,7 @@ public class YoLowLevelJointData implements LowLevelJointDataReadOnly
    {
       this.kd.set(kd);
    }
+
+
+
 }

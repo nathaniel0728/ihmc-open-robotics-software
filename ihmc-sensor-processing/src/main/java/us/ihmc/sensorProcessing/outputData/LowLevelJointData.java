@@ -5,12 +5,14 @@ import us.ihmc.robotics.screwTheory.OneDoFJoint;
 public class LowLevelJointData implements LowLevelJointDataReadOnly
 {
    private LowLevelJointControlMode controlMode;
+   private JointBehaviorHint jointBehaviorHint;
    private double desiredTorque = Double.NaN;
    private double desiredPosition = Double.NaN;
    private double desiredVelocity = Double.NaN;
    private double desiredAcceleration = Double.NaN;
    private double desiredCurrent = Double.NaN;
    private boolean resetIntegrators = false;
+   
    
    private double kp = Double.NaN;
    private double kd = Double.NaN;
@@ -23,6 +25,7 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    public void clear()
    {
       controlMode = null;
+      jointBehaviorHint = null;
       desiredTorque = Double.NaN;
       desiredPosition = Double.NaN;
       desiredVelocity = Double.NaN;
@@ -37,6 +40,7 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    public void set(LowLevelJointDataReadOnly other)
    {
       controlMode = other.getControlMode();
+      jointBehaviorHint = other.getJointBehaviorHint();
       desiredTorque = other.getDesiredTorque();
       desiredPosition = other.getDesiredPosition();
       desiredVelocity = other.getDesiredVelocity();
@@ -55,6 +59,8 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    {
       if (!hasControlMode())
          controlMode = other.getControlMode();
+      if(!hasJointBehaviorHint())
+         jointBehaviorHint = other.getJointBehaviorHint();
       if (!hasDesiredTorque())
          desiredTorque = other.getDesiredTorque();
       if (!hasDesiredPosition())
@@ -87,6 +93,11 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    public void setControlMode(LowLevelJointControlMode controlMode)
    {
       this.controlMode = controlMode;
+   }
+   
+   public void setJointBehavoirHint(JointBehaviorHint jointBehaviorHint)
+   {
+      this.jointBehaviorHint = jointBehaviorHint;
    }
 
    public void setDesiredTorque(double tau)
@@ -126,6 +137,12 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    }
 
    @Override
+   public boolean hasJointBehaviorHint()
+   {
+      return jointBehaviorHint != null;
+   }
+   
+   @Override
    public boolean hasDesiredTorque()
    {
       return !Double.isNaN(desiredTorque);
@@ -159,6 +176,12 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
    public LowLevelJointControlMode getControlMode()
    {
       return controlMode;
+   }
+   
+   @Override
+   public JointBehaviorHint getJointBehaviorHint()
+   {
+      return jointBehaviorHint;
    }
 
    @Override
@@ -206,16 +229,12 @@ public class LowLevelJointData implements LowLevelJointDataReadOnly
       return resetIntegrators;
    }
 
+
    @Override
    public String toString()
    {
-      String ret = "controlMode = " + getControlMode() + "\n";
-      ret += "desiredTorque = " + getDesiredTorque() + "\n";
-      ret += "desiredPosition = " + getDesiredPosition() + "\n";
-      ret += "desiredVelocity = " + getDesiredVelocity() + "\n";
-      ret += "desiredAcceleration = " + getDesiredAcceleration() + "\n";
-      ret += "desiredCurrent = " + getDesiredCurrent() + "\n";
-      return ret;
+      return "LowLevelJointData [controlMode=" + controlMode + ", jointBehaviorHint=" + jointBehaviorHint + ", desiredTorque=" + desiredTorque + ", desiredPosition=" + desiredPosition + ", desiredVelocity=" + desiredVelocity
+            + ", desiredAcceleration=" + desiredAcceleration + ", desiredCurrent=" + desiredCurrent + ", resetIntegrators=" + resetIntegrators + ", kp=" + kp + ", kd=" + kd + "]";
    }
 
    @Override
