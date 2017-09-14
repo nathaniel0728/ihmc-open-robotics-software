@@ -22,6 +22,12 @@ import us.ihmc.simulationconstructionset.HumanoidFloatingRootJointRobot;
 import us.ihmc.simulationconstructionset.SimulationConstructionSet;
 import us.ihmc.wholeBodyController.RobotContactPointParameters;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class DRCFlatGroundWalkingTrack
 {
    // looking for CREATE_YOVARIABLE_WALKING_PROVIDERS ?  use the second constructor and pass in WalkingProvider = YOVARIABLE_PROVIDER
@@ -77,7 +83,29 @@ public class DRCFlatGroundWalkingTrack
       avatarSimulationFactory.setSCSInitialSetup(scsInitialSetup);
       avatarSimulationFactory.setGuiInitialSetup(guiInitialSetup);
       avatarSimulationFactory.setHumanoidGlobalDataProducer(null);
+
+
+      String parameterFileName = "controlParameters.xml";
+      Path path = Paths.get("parameters/" + parameterFileName);
+      System.out.println("path=" + path.toAbsolutePath());
+
+      FileInputStream fileInputStream = null;
+      try
+      {
+
+         fileInputStream = new FileInputStream(path.toAbsolutePath().toString());
+
+      }
+      catch (FileNotFoundException e)
+      {
+         e.printStackTrace();
+      }
+
+      avatarSimulationFactory.setParameterFile(fileInputStream);
+
       avatarSimulation = avatarSimulationFactory.createAvatarSimulation();
+
+
       initialize();
       avatarSimulation.start();
    }
