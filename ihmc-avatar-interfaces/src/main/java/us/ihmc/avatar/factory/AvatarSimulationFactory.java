@@ -1,12 +1,13 @@
 package us.ihmc.avatar.factory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import us.ihmc.avatar.DRCEstimatorThread;
-import us.ihmc.avatar.SimulatedLowLevelOutputWriter;
 import us.ihmc.avatar.drcRobot.DRCRobotModel;
 import us.ihmc.avatar.drcRobot.SimulatedDRCRobotTimeProvider;
 import us.ihmc.avatar.initialSetup.DRCGuiInitialSetup;
@@ -62,6 +63,7 @@ import us.ihmc.wholeBodyController.DRCRobotJointMap;
 import us.ihmc.wholeBodyController.concurrent.SingleThreadedThreadDataSynchronizer;
 import us.ihmc.wholeBodyController.concurrent.ThreadDataSynchronizer;
 import us.ihmc.wholeBodyController.concurrent.ThreadDataSynchronizerInterface;
+import us.ihmc.yoVariables.parameters.XmlParameterReader;
 import us.ihmc.yoVariables.registry.YoVariableRegistry;
 
 public class AvatarSimulationFactory
@@ -73,6 +75,7 @@ public class AvatarSimulationFactory
    private final RequiredFactoryField<DRCSCSInitialSetup> scsInitialSetup = new RequiredFactoryField<>("scsInitialSetup");
    private final RequiredFactoryField<DRCGuiInitialSetup> guiInitialSetup = new RequiredFactoryField<>("guiInitialSetup");
    private final RequiredFactoryField<HumanoidGlobalDataProducer> humanoidGlobalDataProducer = new RequiredFactoryField<>("humanoidGlobalDataProducer");
+   private final RequiredFactoryField<InputStream> parameterFile = new RequiredFactoryField<>("parameterFile");
 
    private final OptionalFactoryField<Double> gravity = new OptionalFactoryField<>("gravity");
    private final OptionalFactoryField<Boolean> doSlowIntegrationForTorqueOffset = new OptionalFactoryField<>("doSlowIntegrationForTorqueOffset");
@@ -371,6 +374,8 @@ public class AvatarSimulationFactory
 
    private void initializeSimulationConstructionSet()
    {
+      simulationConstructionSet.setParameterRootPath(threadedRobotController.getYoVariableRegistry());
+      
       humanoidFloatingRootJointRobot.setDynamicIntegrationMethod(scsInitialSetup.get().getDynamicIntegrationMethod());
       scsInitialSetup.get().initializeSimulation(simulationConstructionSet);
 
@@ -426,6 +431,8 @@ public class AvatarSimulationFactory
       setupCMPVisualization();
       setupCOMVisualization();
       initializeSimulationConstructionSet();
+      
+      loadParameters();
 
       AvatarSimulation avatarSimulation = new AvatarSimulation();
       avatarSimulation.setSimulationConstructionSet(simulationConstructionSet);
@@ -443,6 +450,21 @@ public class AvatarSimulationFactory
       FactoryTools.disposeFactory(this);
 
       return avatarSimulation;
+   }
+   
+   public void loadParameters()
+   {
+      XmlParameterReader reader;
+      try
+      {
+         reader = new XmlParameterReader(parameterFile.get());
+         reader.readParametersInRegistry(controllerThread.getYoVariableRegistry());
+         reader.readParametersInRegistry(stateEstimationThread.getYoVariableRegistry());
+      }
+      catch (IOException e)
+      {
+         throw new RuntimeException("Cannot read parameters.", e);
+      }
    }
 
    public void setRobotModel(DRCRobotModel robotModel)
@@ -478,6 +500,11 @@ public class AvatarSimulationFactory
    public void setHumanoidGlobalDataProducer(HumanoidGlobalDataProducer humanoidGlobalDataProducer)
    {
       this.humanoidGlobalDataProducer.set(humanoidGlobalDataProducer);
+   }
+   
+   public void setParameterFile(InputStream parameterFile)
+   {
+      this.parameterFile.set(parameterFile);
    }
 
    public void setDoSlowIntegrationForTorqueOffset(boolean doSlowIntegrationForTorqueOffset)
