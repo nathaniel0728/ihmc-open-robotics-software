@@ -385,15 +385,16 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
 
    private PID3DGains createPelvisOrientationControlGains()
    {
-      double kpXY = 80.0;
+      double kpXY = 40.0;
       double kpZ = 40.0;
-      double zeta = runningOnRealRobot ? 0.5 : 0.8;
+      double zetaXY = runningOnRealRobot ? 0.2 : 0.8;
+      double zetaZ = runningOnRealRobot ? 0.5 : 0.8;
       double maxAccel = runningOnRealRobot ? 12.0 : 36.0;
       double maxJerk = runningOnRealRobot ? 180.0 : 540.0;
 
       DefaultPID3DGains gains = new DefaultPID3DGains(GainCoupling.XY, false);
       gains.setProportionalGains(kpXY, kpXY, kpZ);
-      gains.setDampingRatios(zeta);
+      gains.setDampingRatios(zetaXY, zetaXY, zetaZ);
       gains.setMaxFeedbackAndFeedbackRate(maxAccel, maxJerk);
 
       return gains;
@@ -713,7 +714,7 @@ public class AtlasWalkingControllerParameters extends WalkingControllerParameter
    @Override
    public double getDefaultSwingTime()
    {
-      return (runningOnRealRobot ? 1.2 : 0.60); //Math.sqrt(jointMap.getModelScale()) *
+      return (runningOnRealRobot ? 1.2 : 0.6); //Math.sqrt(jointMap.getModelScale()) *
    }
 
    @Override
